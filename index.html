@@ -1,0 +1,79 @@
+<html>
+
+<head>
+    <title>Positional Tracking Demo</title>
+    <meta http-equiv="content-type" content="text/html, charset=ISO-8859-1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+
+    <!--<script type="text/javascript" src="src/third-party/js-aruco/aruco.js"></script>-->
+    <!--<script type="text/javascript" src="src/third-party/js-aruco/cv.js"></script>-->
+    <!--<script type="text/javascript" src="src/third-party/js-aruco/posit1.js"></script>-->
+    <!--<script type="text/javascript" src="src/third-party/js-aruco/posit2.js"></script>-->
+    <!--<script type="text/javascript" src="src/third-party/js-aruco/svd.js"></script>-->
+
+    <script type="text/javascript" src="src/VROne.js"></script>
+
+    <script type="text/javascript" src="src/math/Vector2.js"></script>
+    <script type="text/javascript" src="src/math/Vector3.js"></script>
+    <script type="text/javascript" src="src/math/Quaternion.js"></script>
+    <script type="text/javascript" src="src/math/Matrix4.js"></script>
+    <script type="text/javascript" src="src/math/Matrix3.js"></script>
+    <script type="text/javascript" src="src/math/Geometry.js"></script>
+
+    <script type="text/javascript" src="src/stage/Timer.js"></script>
+    <script type="text/javascript" src="src/stage/XMLLoader.js"></script>
+    <script type="text/javascript" src="src/stage/renderer/Renderer.js"></script>
+    <script type="text/javascript" src="src/stage/renderer/VRRenderer.js"></script>
+    <script type="text/javascript" src="src/stage/Scene.js"></script>
+    <script type="text/javascript" src="src/stage/camera/Camera.js"></script>
+    <script type="text/javascript" src="src/stage/Light.js"></script>
+    <script type="text/javascript" src="src/stage/buffer/Buffer.js"></script>
+    <script type="text/javascript" src="src/stage/buffer/BufferMulti.js"></script>
+    <script type="text/javascript" src="src/stage/buffer/Shader.js"></script>
+    <script type="text/javascript" src="src/stage/buffer/ShaderGenerator.js"></script>
+    <script type="text/javascript" src="src/stage/sound/Sound.js"></script>
+    <script type="text/javascript" src="src/stage/sound/AudioContext.js"></script>
+
+    <script type="text/javascript" src="src/objects/Object3D.js"></script>
+    <script type="text/javascript" src="src/objects/loader/OBJLoader.js"></script>
+    <script type="text/javascript" src="src/objects/types/VRSquare.js"></script>
+    <script type="text/javascript" src="src/objects/types/ParticleSystem.js"></script>
+    <script type="text/javascript" src="src/objects/types/Skybox.js"></script>
+    <script type="text/javascript" src="src/objects/examples/Cube3D.js"></script>
+    <script type="text/javascript" src="src/objects/examples/CubeTexture3D.js"></script>
+    <script type="text/javascript" src="src/objects/examples/CubeTexture3D_2.js"></script>
+    <script type="text/javascript" src="src/objects/examples/CubeTexture3D_3.js"></script>
+    <script type="text/javascript" src="src/objects/examples/CubeTexture3D_4.js"></script>
+    <script type="text/javascript" src="src/objects/examples/Pyramid3D.js"></script>
+    <script type="text/javascript" src="src/objects/examples/Sphere3D.js"></script>
+    <script type="text/javascript" src="src/objects/examples/Square.js"></script>
+
+    <script type="text/javascript" src="src/inputHandlers/KeyboardHandler.js"></script>
+    <script type="text/javascript" src="src/inputHandlers/GamepadHandler.js"></script>
+    <script type="text/javascript" src="src/inputHandlers/MouseHandler.js"></script>
+    <script type="text/javascript" src="src/inputHandlers/SensorsHandler.js"></script>
+    <script type="text/javascript" src="src/inputHandlers/HMDHandler.js"></script>
+
+    <script type="text/javascript" src="src/stage/camera/CameraManager.js"></script>
+    <script type="text/javascript" src="src/stage/camera/cameraModifiers/CameraModifier.js"></script>
+    <script type="text/javascript" src="src/stage/camera/cameraModifiers/Cardboard.js"></script>
+    <script type="text/javascript" src="src/stage/camera/cameraModifiers/PositionalCardboard.js"></script>
+    <script type="text/javascript" src="src/stage/camera/cameraModifiers/WebVR.js"></script>
+    <script type="text/javascript" src="src/stage/camera/cameraModifiers/MouseKeyboard.js"></script>
+    <script type="text/javascript" src="src/stage/camera/cameraModifiers/Gamepad.js"></script>
+
+    <script type="text/javascript" src="positional.js"></script>
+
+</head>
+
+
+<body style="border: none; margin: 0;">
+<div style="width: 100%; height: 100%;">
+    <canvas id="canvas" style="border: none; margin: 0;z-index: 1"></canvas>
+    <canvas id="cameraCanvas" style="border: none; margin: 0; position: fixed; z-index: 2; width: 320px; height: 240px; background-color: #ffffff; top: 0px;"></canvas>
+    <button id="setDefaultOrientation" style="margin: 0; position: fixed; z-index: 3; top: 0px;">Reset</button>
+    <video id="video" autoplay="true" style="display:none;"></video>
+</div>
+</body>
+
+</html>
