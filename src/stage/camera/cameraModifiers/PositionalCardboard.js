@@ -1,8 +1,4 @@
 /**
- * jslint browser: true
- */
-
-/**
  * Creates new VR device configuration for Google Cardboard (and similar viewers) with experimental positional tracking. Fiducial foundMarkers need to be placed in environment.
  * @class
  * @constructor
@@ -67,9 +63,30 @@ VROne.PositionalCardboard = function (markerSize) {
         arucoCanvas.width = parseInt(arucoCanvas.style.width);
         arucoCanvas.height = parseInt(arucoCanvas.style.height);
 
-        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+        navigator.getUserMedia =
+            navigator.getUserMedia ||
+            navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia ||
+            navigator.msGetUserMedia;
+        window.URL =
+            window.URL ||
+            window.webkitURL ||
+            window.mozURL ||
+            window.msURL;
 
         var constraints;
+        var successCallback = function(stream) {
+            if (window.URL) {
+                video.src = window.URL.createObjectURL(stream);
+            } else if (video.mozSrcObject !== undefined) {
+                video.mozSrcObject = stream;
+            } else {
+                video.src = stream;
+            }
+        };
+        var errorCallback = function(error) {
+            console.error(error);
+        };
 
         var getEnvironmentCamera = function(sourceInfos) {
             var fallBackCamera;
@@ -103,25 +120,15 @@ VROne.PositionalCardboard = function (markerSize) {
             }
             if(constraints !== undefined){
                 console.log("getting front facing camera");
-                var successCallback = function(stream) {
-                    if (window.webkitURL) {
-                        video.src = window.webkitURL.createObjectURL(stream);
-                    } else if (video.mozSrcObject !== undefined) {
-                        video.mozSrcObject = stream;
-                    } else {
-                        video.src = stream;
-                    }
-                };
-                var errorCallback = function(error) {
-                    console.error(error);
-                };
+
                 navigator.getUserMedia(constraints, successCallback, errorCallback);
             }
         };
 
-        if (typeof MediaStreamTrack === 'undefined' ||
-            typeof MediaStreamTrack.getSources === 'undefined') {
+        if (typeof MediaStreamTrack === 'undefined' || typeof MediaStreamTrack.getSources === 'undefined') {
             alert("This browser doesn't support MediaStreamTrack. Back facing camera can't be used.");
+            //navigator.getUserMedia({audio: false, video:true}, successCallback, errorCallback)
+            navigator.getUserMedia({audio: false, video:true}, successCallback, errorCallback)
         } else {
             MediaStreamTrack.getSources(getEnvironmentCamera);
         }
