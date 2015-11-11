@@ -85,9 +85,9 @@ VROne.Scene = function (canvas) {
      * @param {Number} markerSize
      * @param {Boolean} distorted
      */
-    this.usePositionalCardboard = function(markerSize, distorted){
+    this.usePositionalCardboard = function(markerSize, distorted, showVideo){
         this.setRendererVR(distorted);
-        camera.getManager().modifiers.push(new VROne.PositionalCardboard(markerSize));
+        camera.getManager().modifiers.push(new VROne.PositionalCardboard(markerSize, showVideo));
         camera.useVR = true;
         this.resize();
 

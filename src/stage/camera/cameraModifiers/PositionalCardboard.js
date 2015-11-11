@@ -3,7 +3,7 @@
  * @class
  * @constructor
  */
-VROne.PositionalCardboard = function (markerSize) {
+VROne.PositionalCardboard = function (markerSize, showVideo) {
 
     VROne.CameraModifier.call(this);
 
@@ -36,7 +36,8 @@ VROne.PositionalCardboard = function (markerSize) {
         prediction: false,
         filterSamples: 1,
         filtering: false,
-        filterMethod: 1
+        filterMethod: 1,
+        showVideo: false
     };
 
     var degToRad = function(degrees){
@@ -56,12 +57,25 @@ VROne.PositionalCardboard = function (markerSize) {
         }
     }, false);
 
-    var initCamera = function(){
-        video = document.getElementById("video");
-        arucoCanvas = document.getElementById("cameraCanvas");
-        context = arucoCanvas.getContext("2d");
+    var addHTMLElements = function(){
+        video = document.createElement("video");
+        video.setAttribute("autoplay", "true");
+        video.setAttribute("style", "display:none");
+        arucoCanvas = document.createElement("canvas");
+        var display = "";
+        if(!showVideo)
+            display = "; display:none";
+        arucoCanvas.setAttribute("style", "position: fixed; z-index: 2; width: 320px; height: 240px; top: 0px" + display);
         arucoCanvas.width = parseInt(arucoCanvas.style.width);
         arucoCanvas.height = parseInt(arucoCanvas.style.height);
+        document.body.insertBefore(video, document.body.firstChild);
+        document.body.insertBefore(arucoCanvas, video);
+    };
+
+    addHTMLElements();
+
+    var initCamera = function(){
+        context = arucoCanvas.getContext("2d");
 
         navigator.getUserMedia =
             navigator.getUserMedia ||
