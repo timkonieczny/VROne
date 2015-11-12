@@ -9,7 +9,7 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
 
     var scope = this,
         video,                                      // HTML5 video element
-        arucoCanvas,                                // canvas used for marker detection
+        videoCanvas,                                // canvas used for marker detection
         context,                                    // 2D canvas for video
         imageData,                                  // video data
         needNewData = true,
@@ -25,7 +25,8 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         gammaOffset = 0,                            // offset used for sensor calibration
         timeSinceLastMarker = 0,                    // counter to determine when new marker frame is needed
         lastPosition = new VROne.Vector3(),         // last valid position obtained through marker used for prediction
-        predictedTranslation = new VROne.Vector3(); // translation calculated for prediction
+        predictedTranslation = new VROne.Vector3(), // translation calculated for prediction
+        isVideoInitialized = false;                 // true if video canvas has same dimensions as video footage
 
     var time = {
         now: Date.now(),
@@ -64,21 +65,19 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         video = document.createElement("video");
         video.setAttribute("autoplay", "true");
         video.setAttribute("style", "display:none");
-        arucoCanvas = document.createElement("canvas");
+        videoCanvas = document.createElement("canvas");
         var display = "";
         if(!showVideo)
             display = "; display:none";
-        arucoCanvas.setAttribute("style", "position: fixed; z-index: 2; width: 320px; height: 240px; top: 0px" + display);
-        arucoCanvas.width = parseInt(arucoCanvas.style.width);
-        arucoCanvas.height = parseInt(arucoCanvas.style.height);
+        videoCanvas.setAttribute("style", "position: fixed; z-index: 2; width: 16em; height: 12em; top: 0px" + display);
         document.body.insertBefore(video, document.body.firstChild);
-        document.body.insertBefore(arucoCanvas, video);
+        document.body.insertBefore(videoCanvas, video);
     };
 
     addHTMLElements();
 
     var initCamera = function(){
-        context = arucoCanvas.getContext("2d");
+        context = videoCanvas.getContext("2d");
 
         navigator.getUserMedia =
             navigator.getUserMedia ||
@@ -112,9 +111,10 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
                     if (sourceInfos[i].facing === "environment") {
                         constraints = {
                             video: {
-                                optional: [{
-                                    sourceId: sourceInfos[i].id
-                                }]
+                                optional: [
+                                    {sourceId: sourceInfos[i].id},
+                                    {frameRate: 60}
+                                ]
                             }
                         };
                     }else{
@@ -143,8 +143,7 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         };
 
         if (typeof MediaStreamTrack === 'undefined' || typeof MediaStreamTrack.getSources === 'undefined') {
-            alert("This browser doesn't support MediaStreamTrack. Back facing camera can't be used.");
-            //navigator.getUserMedia({audio: false, video:true}, successCallback, errorCallback)
+            console.warn("This browser doesn't support MediaStreamTrack. Back facing camera can't be used.");
             navigator.getUserMedia({audio: false, video:true}, successCallback, errorCallback)
         } else {
             MediaStreamTrack.getSources(getEnvironmentCamera);
@@ -154,10 +153,8 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
     initCamera();
 
     var initWorker = function(){
-        cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': arucoCanvas.width, 'canvasHeight': arucoCanvas.height});
+        cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': videoCanvas.width, 'canvasHeight': videoCanvas.height});
     };
-
-    initWorker();
 
     this.updateConfiguration = function(){
         cvWorker.postMessage({'filtering': scope.configuration.filtering, 'filterMethod': scope.configuration.filterMethod, 'filterSamples': scope.configuration.filterSamples});
@@ -165,10 +162,16 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
 
     var updateImageData = function(){
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            if(!isVideoInitialized){
+                videoCanvas.height = video.videoHeight;
+                videoCanvas.width = video.videoWidth;
+                initWorker();
+                isVideoInitialized = true;
+            }
             imageData = [];
             for(var i = 0; i < scope.configuration.imageSamples; i++){
-                context.drawImage(video, 0, 0, arucoCanvas.width, arucoCanvas.height);              // TODO: interval is too short. video outputs same frame twice
-                imageData.push(context.getImageData(0, 0, arucoCanvas.width, arucoCanvas.height))
+                context.drawImage(video, 0, 0, videoCanvas.width, videoCanvas.height);              // TODO: interval is too short. video outputs same frame twice
+                imageData.push(context.getImageData(0, 0, videoCanvas.width, videoCanvas.height))
             }
 
             if(!workerRunning) {
@@ -200,8 +203,6 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
     };
 
     this.update = function(){
-
-        console.log(detectionInProcess);
 
         time.now = Date.now();
         time.delta = time.now - time.last;
