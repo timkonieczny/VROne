@@ -7,37 +7,40 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
 
     VROne.CameraModifier.call(this);
 
-    var video,                                      // HTML5 video element
+    var scope = this,
+        video,                                      // HTML5 video element
         arucoCanvas,                                // canvas used for marker detection
         context,                                    // 2D canvas for video
         imageData,                                  // video data
-        movement = new VROne.Vector3(),
         needNewData = true,
         orientation = new VROne.Quaternion(),
-        lastUpdate = Date.now(),
         position = new VROne.Vector3(),             // current position
-        frameCounter = 0,                           // counter for frame drop
-        processingData = false,                     // indicates if worker is currently processing image data
+        detectionInProcess = false,                     // indicates if worker is currently processing image data
         workerRunning = false,                      // indicates if worker is currently running
         cvWorker = new Worker("CVWorker.js"),       // worker that handles image processing
         alpha = 0,
         beta = 0,
         gamma = 0,
         alphaOffset = 0,                            // offset used for sensor calibration
-        gammaOffset = 0;                            // offset used for sensor calibration
-        //predictedTranslation = [0, 0, 0];
+        gammaOffset = 0,                            // offset used for sensor calibration
+        timeSinceLastMarker = 0,                    // counter to determine when new marker frame is needed
+        lastPosition = new VROne.Vector3(),         // last valid position obtained through marker used for prediction
+        predictedTranslation = new VROne.Vector3(); // translation calculated for prediction
 
-    var scope = this;
+    var time = {
+        now: Date.now(),
+        last: Date.now(),
+        delta: 0
+    };
 
     this.configuration = {
         speed: 1 / 1000,
-        dropFrames: 3,
+        updatesPerSecond: 30,
         imageSamples: 1,
-        prediction: true,
+        prediction: false,
         filterSamples: 1,
         filtering: false,
-        filterMethod: 1,
-        showVideo: false
+        filterMethod: 1
     };
 
     var degToRad = function(degrees){
@@ -175,36 +178,50 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         }
     };
 
-    var lastPosition = new VROne.Vector3();
-    var predictedTranslation = new VROne.Vector3();
-
     var updatePosition = function(currentPosition){
-        position.x = -currentPosition[0] * scope.configuration.speed;
-        position.y = -currentPosition[1] * scope.configuration.speed;
-        position.z = -currentPosition[2] * scope.configuration.speed;
 
-        predictedTranslation.x = (lastPosition.x - position.x) / (scope.configuration.dropFrames + 1);
-        predictedTranslation.y = (lastPosition.y - position.y) / (scope.configuration.dropFrames + 1);
-        predictedTranslation.z = (lastPosition.z - position.z) / (scope.configuration.dropFrames + 1);
-        lastPosition.x = position.x;
-        lastPosition.y = position.y;
-        lastPosition.z = position.z;
+        position.set(
+            -currentPosition[0] * scope.configuration.speed,
+            -currentPosition[1] * scope.configuration.speed,
+            -currentPosition[2] * scope.configuration.speed
+        );
+
+        if(scope.configuration.prediction) {
+            predictedTranslation.set(
+                -lastPosition.x + position.x,
+                -lastPosition.y + position.y,
+                -lastPosition.z + position.z
+            );
+
+            lastPosition.set(position.x, position.y, position.z);
+        }
+
+        detectionInProcess = false;
     };
 
     this.update = function(){
-        frameCounter = (frameCounter + 1) % (scope.configuration.dropFrames + 1);
-        if(frameCounter == scope.configuration.dropFrames){
+
+        console.log(detectionInProcess);
+
+        time.now = Date.now();
+        time.delta = time.now - time.last;
+        time.last = time.now;
+        timeSinceLastMarker += time.delta;
+
+        if(timeSinceLastMarker>=1000 / scope.configuration.updatesPerSecond && !detectionInProcess){
+            timeSinceLastMarker = 0;
             updateImageData();
             if(imageData!==undefined) {                                             // from now on camera delivers a continuous data stream
                 cvWorker.postMessage({'command': 'update', 'data': imageData});
-                processingData = true;
+                detectionInProcess = true;
                 needNewData = false;
             }
         }else if(scope.configuration.prediction){
-            position.add(predictedTranslation.x, predictedTranslation.y, predictedTranslation.z);
+            position.add(
+                predictedTranslation.x * time.delta / (1000 / scope.configuration.updatesPerSecond),
+                predictedTranslation.y * time.delta / (1000 / scope.configuration.updatesPerSecond),
+                predictedTranslation.z * time.delta / (1000 / scope.configuration.updatesPerSecond));
         }
-
-        lastUpdate = Date.now();
 
         alpha = degToRad(-VROne.SensorsHandler.getRoll()+180);
         beta = degToRad(-VROne.SensorsHandler.getPitch());
@@ -222,10 +239,13 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         var s1 = Math.sin(alpha/2);
         var s2 = Math.sin(beta/2);
         var s3 = Math.sin(gamma/2);
-        orientation.x = s1*s2*c3 +c1*c2*s3;
-        orientation.y = s1*c2*c3 + c1*s2*s3;
-        orientation.z = -(c1*s2*c3 - s1*c2*s3);
-        orientation.w = c1*c2*c3 - s1*s2*s3;
+
+        orientation.set(
+            s1*s2*c3 +c1*c2*s3,
+            s1*c2*c3 + c1*s2*s3,
+            -(c1*s2*c3 - s1*c2*s3),
+            c1*c2*c3 - s1*s2*s3
+        );
     };
 
     /**
