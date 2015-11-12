@@ -98,26 +98,13 @@ var update = function(imageData){
 
     if(foundMarkers.length > 0){
 
-        console.log(-foundMarkers[0].corners[0].y + " + " + (canvas.height / 2) + " = " + (-foundMarkers[0].corners[0].y + canvas.height / 2));
-
         for(var i = 0; i < foundMarkers[0].corners.length; i++){
             foundMarkers[0].corners[i].x -= canvas.width / 2;
             foundMarkers[0].corners[i].y = -foundMarkers[0].corners[i].y + canvas.height / 2;
         }
-        console.log(foundMarkers[0].corners[0].x);
+        //console.log(foundMarkers[0].corners[0].x);
 
         pose = posit.pose(foundMarkers[0].corners);
-
-        //var coordinateCenter = {            // TODO: pose.bestTranslation is unfiltered, yet still used for calculation
-        //    x: Math.tan((32 / 35) / 2) * pose.bestTranslation[2], // center of coordinate system (x)
-        //    y: Math.tan((24 / 35) / 2) * pose.bestTranslation[2]  // center of coordinate system (y)
-        //};
-
-        //var markerPosition = {
-        //    x: pose.bestTranslation[0] - coordinateCenter.x,
-        //    y: -pose.bestTranslation[1] + coordinateCenter.y,
-        //    z: pose.bestTranslation[2]
-        //};
 
         markerPosition.x = pose.bestTranslation[0];
         markerPosition.y = pose.bestTranslation[1];

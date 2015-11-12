@@ -13,13 +13,13 @@ function init() {
 
             var config = scene.getPositionalConfig();
 
-            config.speed = 1 / 50;
-            config.dropFrames = 2;
-            config.imageSamples = 1;
-            config.prediction = false;
-            config.filtering = false;
-            config.filterSamples = 1;
-            config.filterMethod = 0;
+            //config.speed = 1 / 50;
+            //config.dropFrames = 5;
+            //config.imageSamples = 1;
+            //config.prediction = false;
+            //config.filtering = false;
+            //config.filterSamples = 1;
+            //config.filterMethod = 0;
 
             scene.updatePositionalConfig(config);
         }

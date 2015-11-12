@@ -24,16 +24,16 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         beta = 0,
         gamma = 0,
         alphaOffset = 0,                            // offset used for sensor calibration
-        gammaOffset = 0,                            // offset used for sensor calibration
-        predictedTranslation = [0, 0, 0];
+        gammaOffset = 0;                            // offset used for sensor calibration
+        //predictedTranslation = [0, 0, 0];
 
     var scope = this;
 
     this.configuration = {
-        speed: 1 / 50,
-        dropFrames: 1,
+        speed: 1 / 1000,
+        dropFrames: 3,
         imageSamples: 1,
-        prediction: false,
+        prediction: true,
         filterSamples: 1,
         filtering: false,
         filterMethod: 1,
@@ -175,32 +175,34 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         }
     };
 
-    var lastPosition = [0,0,0];
+    var lastPosition = new VROne.Vector3();
+    var predictedTranslation = new VROne.Vector3();
 
     var updatePosition = function(currentPosition){
-        //console.log(currentPosition[0] + "\t" + currentPosition[1] + "\t" + currentPosition[2]);
-        movement.x = (lastPosition[0] - currentPosition[0]) * scope.configuration.speed;
-        movement.y = (lastPosition[1] - currentPosition[1]) * scope.configuration.speed;
-        movement.z = (lastPosition[2] - currentPosition[2]) * scope.configuration.speed;
-        //console.log(movement.x + "\t" + movement.y + "\t" + movement.z);
-        lastPosition = currentPosition;
+        position.x = -currentPosition[0] * scope.configuration.speed;
+        position.y = -currentPosition[1] * scope.configuration.speed;
+        position.z = -currentPosition[2] * scope.configuration.speed;
+
+        predictedTranslation.x = (lastPosition.x - position.x) / (scope.configuration.dropFrames + 1);
+        predictedTranslation.y = (lastPosition.y - position.y) / (scope.configuration.dropFrames + 1);
+        predictedTranslation.z = (lastPosition.z - position.z) / (scope.configuration.dropFrames + 1);
+        lastPosition.x = position.x;
+        lastPosition.y = position.y;
+        lastPosition.z = position.z;
     };
 
     this.update = function(){
-        frameCounter = (frameCounter + 1) % scope.configuration.dropFrames;
-        if(frameCounter == scope.configuration.dropFrames - 1){
+        frameCounter = (frameCounter + 1) % (scope.configuration.dropFrames + 1);
+        if(frameCounter == scope.configuration.dropFrames){
             updateImageData();
             if(imageData!==undefined) {                                             // from now on camera delivers a continuous data stream
                 cvWorker.postMessage({'command': 'update', 'data': imageData});
                 processingData = true;
                 needNewData = false;
             }
+        }else if(scope.configuration.prediction){
+            position.add(predictedTranslation.x, predictedTranslation.y, predictedTranslation.z);
         }
-
-        var p = (Date.now()-lastUpdate)/1000;
-        position.add(movement.x * p, movement.y * p, movement.z * p);
-
-        movement.nullVector();
 
         lastUpdate = Date.now();
 
