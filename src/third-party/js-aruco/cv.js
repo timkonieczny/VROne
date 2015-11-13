@@ -36,11 +36,17 @@ CV.Image = function(width, height, data){
   this.data = data || [];
 };
 
-CV.grayscale = function(imageSrc, imageDst, imageWidth, imageHeight){
-  var src = imageSrc, dst = imageDst.data, len = src.length,
-      i = 0, j = 0;
+var src, dst, len;
+var i, j;
 
-  for (; i < len; i += 4){
+CV.grayscale = function(imageSrc, imageDst, imageWidth, imageHeight){
+  src = imageSrc;
+  dst = imageDst.data;
+  len = src.length;
+
+  j = 0;
+
+  for (i = 0; i < len; i += 4){
     dst[j ++] =
       (src[i] * 0.299 + src[i + 1] * 0.587 + src[i + 2] * 0.114 + 0.5) & 0xff;
   }
@@ -51,9 +57,13 @@ CV.grayscale = function(imageSrc, imageDst, imageWidth, imageHeight){
   return imageDst;
 };
 
+var tab;
+
 CV.threshold = function(imageSrc, imageDst, threshold){
-  var src = imageSrc.data, dst = imageDst.data,
-      len = src.length, tab = [], i;
+  src = imageSrc.data;
+  dst = imageDst.data;
+  len = src.length;
+  tab = [];
 
   for (i = 0; i < 256; ++ i){
     tab[i] = i <= threshold? 0: 255;
@@ -70,7 +80,10 @@ CV.threshold = function(imageSrc, imageDst, threshold){
 };
 
 CV.adaptiveThreshold = function(imageSrc, imageDst, kernelSize, threshold){
-  var src = imageSrc.data, dst = imageDst.data, len = src.length, tab = [], i;
+  src = imageSrc.data;
+  dst = imageDst.data;
+  len = src.length;
+  tab = [];
 
   CV.stackBoxBlur(imageSrc, imageDst, kernelSize);
 
@@ -88,10 +101,18 @@ CV.adaptiveThreshold = function(imageSrc, imageDst, kernelSize, threshold){
   return imageDst;
 };
 
+var hist, threshold, sum, sumB, wB, wF, max, mu, between;
+
 CV.otsu = function(imageSrc){
-  var src = imageSrc.data, len = src.length, hist = [],
-      threshold = 0, sum = 0, sumB = 0, wB = 0, wF = 0, max = 0,
-      mu, between, i;
+  src = imageSrc.data;
+  len = src.length;
+  hist = [];
+  threshold = 0;
+  sum = 0;
+  sumB = 0;
+  wB = 0;
+  wF = 0;
+  max = 0;
 
   for (i = 0; i < 256; ++ i){
     hist[i] = 0;
@@ -141,16 +162,36 @@ CV.BlurStack = function(){
   this.next = null;
 };
 
-CV.stackBoxBlur = function(imageSrc, imageDst, kernelSize){
-  var src = imageSrc.data, dst = imageDst.data,
-      height = imageSrc.height, width = imageSrc.width,
-      heightMinus1 = height - 1, widthMinus1 = width - 1,
-      size = kernelSize + kernelSize + 1, radius = kernelSize + 1,
-      mult = CV.stackBoxBlurMult[kernelSize],
-      shift = CV.stackBoxBlurShift[kernelSize],
-      stack, stackStart, color, sum, pos, start, p, x, y, i;
+var height,
+    width,
+    heightMinus1,
+    widthMinus1,
+    size,
+    radius,
+    mult,
+    shift,
+    stack,
+    stackStart,
+    color,
+    pos,
+    start,
+    p,
+    x,
+    y;
 
+CV.stackBoxBlur = function(imageSrc, imageDst, kernelSize){
+  src = imageSrc.data;
+  dst = imageDst.data;
+  height = imageSrc.height;
+  width = imageSrc.width;
+  heightMinus1 = height - 1;
+  widthMinus1 = width - 1;
+  size = kernelSize + kernelSize + 1;
+  radius = kernelSize + 1;
+  mult = CV.stackBoxBlurMult[kernelSize];
+  shift = CV.stackBoxBlurShift[kernelSize];
   stack = stackStart = new CV.BlurStack();
+
   for (i = 1; i < size; ++ i){
     stack = stack.next = new CV.BlurStack();
   }
@@ -226,8 +267,10 @@ CV.stackBoxBlur = function(imageSrc, imageDst, kernelSize){
   return imageDst;
 };
 
+var kernel;
+
 CV.gaussianBlur = function(imageSrc, imageDst, imageMean, kernelSize){
-  var kernel = CV.gaussianKernel(kernelSize);
+  kernel = CV.gaussianKernel(kernelSize);
 
   imageDst.width = imageSrc.width;
   imageDst.height = imageSrc.height;
@@ -241,12 +284,19 @@ CV.gaussianBlur = function(imageSrc, imageDst, imageMean, kernelSize){
   return imageDst;
 };
 
+var limit,
+    cur,
+    value,
+    k;
+
 CV.gaussianBlurFilter = function(imageSrc, imageDst, kernel, horizontal){
-  var src = imageSrc.data, dst = imageDst.data,
-      height = imageSrc.height, width = imageSrc.width,
-      pos = 0, limit = kernel.length >> 1,
-      cur, value, i, j, k;
-      
+  src = imageSrc.data;
+  dst = imageDst.data;
+  height = imageSrc.height;
+  width = imageSrc.width;
+  pos = 0;
+  limit = kernel.length >> 1;
+
   for (i = 0; i < height; ++ i){
     
     for (j = 0; j < width; ++ j){
@@ -282,13 +332,18 @@ CV.gaussianBlurFilter = function(imageSrc, imageDst, kernel, horizontal){
   return imageDst;
 };
 
+var center,
+    sigma,
+    scale2X;
+
 CV.gaussianKernel = function(kernelSize){
-  var tab =
+  tab =
     [ [1],
       [0.25, 0.5, 0.25],
       [0.0625, 0.25, 0.375, 0.25, 0.0625],
-      [0.03125, 0.109375, 0.21875, 0.28125, 0.21875, 0.109375, 0.03125] ],
-    kernel = [], center, sigma, scale2X, sum, x, i;
+      [0.03125, 0.109375, 0.21875, 0.28125, 0.21875, 0.109375, 0.03125] ];
+
+  kernel = [];
 
   if ( (kernelSize <= 7) && (kernelSize % 2 === 1) ){
     kernel = tab[kernelSize >> 1];
@@ -310,9 +365,17 @@ CV.gaussianKernel = function(kernelSize){
   return kernel;
 };
 
+var contours,
+    deltas,
+    pix,
+    nbd,
+    outer,
+    hole;
+
 CV.findContours = function(imageSrc, binary){
-  var width = imageSrc.width, height = imageSrc.height, contours = [],
-      src, deltas, pos, pix, nbd, outer, hole, i, j;
+  width = imageSrc.width;
+  height = imageSrc.height;
+  contours = [];
   
   src = CV.binaryBorder(imageSrc, binary);
 
@@ -348,8 +411,16 @@ CV.findContours = function(imageSrc, binary){
   return contours;
 };
 
+var contour,
+    pos1,
+    pos3,
+    pos4,
+    s,
+    s_end,
+    s_prev;
+
 CV.borderFollowing = function(src, pos, nbd, point, hole, deltas){
-  var contour = [], pos1, pos3, pos4, s, s_end, s_prev;
+  contour = [];
 
   contour.hole = hole;
       
@@ -408,8 +479,11 @@ CV.borderFollowing = function(src, pos, nbd, point, hole, deltas){
 CV.neighborhood = 
   [ [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1], [0, 1], [1, 1] ];
 
+
 CV.neighborhoodDeltas = function(width){
-  var deltas = [], len = CV.neighborhood.length, i = 0;
+  deltas = [];
+  len = CV.neighborhood.length;
+  i = 0;
   
   for (; i < len; ++ i){
     deltas[i] = CV.neighborhood[i][0] + (CV.neighborhood[i][1] * width);
@@ -418,13 +492,25 @@ CV.neighborhoodDeltas = function(width){
   return deltas.concat(deltas);
 };
 
+var slice = {start_index: 0, end_index: 0},
+    right_slice = {start_index: 0, end_index: 0},
+    poly = [],
+    pt,
+    start_pt,
+    end_pt,
+    dist,
+    max_dist,
+    le_eps,
+    dx,
+    dy;
+
 CV.approxPolyDP = function(contour, epsilon){
-  var slice = {start_index: 0, end_index: 0},
-      right_slice = {start_index: 0, end_index: 0},
-      poly = [], stack = [], len = contour.length,
-      pt, start_pt, end_pt, dist, max_dist, le_eps,
-      dx, dy, i, j, k;
-  
+  slice = {start_index: 0, end_index: 0};
+  right_slice = {start_index: 0, end_index: 0};
+  poly = [];
+  stack = [];
+  len = contour.length;
+
   epsilon *= epsilon;
   
   k = 0;
@@ -514,12 +600,31 @@ CV.approxPolyDP = function(contour, epsilon){
   return poly;
 };
 
+var sx1,
+    sx2,
+    dx1,
+    dx2,
+    sy1,
+    sy2,
+    dy1,
+    dy2,
+    p1,
+    p2,
+    p3,
+    p4,
+    m,
+    r,
+    t,
+    u,
+    v,
+    w;
+
 CV.warp = function(imageSrc, imageDst, contour, warpSize){
-  var src = imageSrc.data, dst = imageDst.data,
-      width = imageSrc.width, height = imageSrc.height,
-      pos = 0,
-      sx1, sx2, dx1, dx2, sy1, sy2, dy1, dy2, p1, p2, p3, p4,
-      m, r, s, t, u, v, w, x, y, i, j;
+  src = imageSrc.data;
+  dst = imageDst.data;
+  width = imageSrc.width;
+  height = imageSrc.height;
+  pos = 0;
   
   m = CV.getPerspectiveTransform(contour, warpSize - 1);
 
@@ -570,8 +675,10 @@ CV.warp = function(imageSrc, imageDst, contour, warpSize){
   return imageDst;
 };
 
+var rq;
+
 CV.getPerspectiveTransform = function(src, size){
-  var rq = CV.square2quad(src);
+  rq = CV.square2quad(src);
   
   rq[0] /= size;
   rq[1] /= size;
@@ -583,8 +690,13 @@ CV.getPerspectiveTransform = function(src, size){
   return rq;
 };
 
+var sq,
+    px,
+    py,
+    den;
+
 CV.square2quad = function(src){
-  var sq = [], px, py, dx1, dx2, dy1, dy2, den;
+  sq = [];
   
   px = src[0].x - src[1].x + src[2].x - src[3].x;
   py = src[0].y - src[1].y + src[2].y - src[3].y;
@@ -621,10 +733,21 @@ CV.square2quad = function(src){
   return sq;
 };
 
+var orientation = 0,
+    convex = true,
+    cur_pt,
+    prev_pt,
+    dxdy0,
+    dydx0,
+    dx0,
+    dy0;
+
 CV.isContourConvex = function(contour){
-  var orientation = 0, convex = true,
-      len = contour.length, i = 0, j = 0,
-      cur_pt, prev_pt, dxdy0, dydx0, dx0, dy0, dx, dy;
+  orientation = 0;
+  convex = true;
+  len = contour.length;
+  i = 0;
+  j = 0;
 
   prev_pt = contour[len - 1];
   cur_pt = contour[0];
@@ -658,8 +781,10 @@ CV.isContourConvex = function(contour){
 };
 
 CV.perimeter = function(poly){
-  var len = poly.length, i = 0, j = len - 1,
-      p = 0.0, dx, dy;
+  len = poly.length;
+  i = 0;
+  j = len - 1;
+  p = 0.0;
 
   for (; i < len; j = i ++){
     dx = poly[i].x - poly[j].x;
@@ -671,9 +796,14 @@ CV.perimeter = function(poly){
   return p;
 };
 
+var min,
+    d;
+
 CV.minEdgeLength = function(poly){
-  var len = poly.length, i = 0, j = len - 1, 
-      min = Infinity, d, dx, dy;
+  len = poly.length;
+  i = 0;
+  j = len - 1;
+  min = Infinity;
 
   for (; i < len; j = i ++){
     dx = poly[i].x - poly[j].x;
@@ -689,11 +819,16 @@ CV.minEdgeLength = function(poly){
   return Math.sqrt(min);
 };
 
+var span,
+    nz;
+
 CV.countNonZero = function(imageSrc, square){
-  var src = imageSrc.data, height = square.height, width = square.width,
-      pos = square.x + (square.y * imageSrc.width),
-      span = imageSrc.width - width,
-      nz = 0, i, j;
+  src = imageSrc.data;
+  height = square.height;
+  width = square.width;
+  pos = square.x + (square.y * imageSrc.width);
+  span = imageSrc.width - width;
+  nz = 0;
   
   for (i = 0; i < height; ++ i){
 
@@ -710,9 +845,15 @@ CV.countNonZero = function(imageSrc, square){
   return nz;
 };
 
+var posSrc,
+    posDst;
+
 CV.binaryBorder = function(imageSrc, dst){
-  var src = imageSrc.data, height = imageSrc.height, width = imageSrc.width,
-      posSrc = 0, posDst = 0, i, j;
+  src = imageSrc.data;
+  height = imageSrc.height;
+  width = imageSrc.width;
+  posSrc = 0;
+  posDst = 0;
 
   for (j = -2; j < width; ++ j){
     dst[posDst ++] = 0;
