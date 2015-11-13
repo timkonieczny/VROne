@@ -11,17 +11,17 @@ function init() {
         if (!webVRSuccess) {
             scene.usePositionalCardboard(80, false, true);
 
-            //var config = scene.getPositionalConfig();
-            //
+            var config = scene.getPositionalConfig();
+
             //config.speed = 1 / 50;
             //config.updatesPerSecond = 30;
             //config.imageSamples = 1;
-            //config.prediction = false;
-            //config.filtering = false;
-            //config.filterSamples = 1;
-            //config.filterMethod = 0;
-            //
-            //scene.updatePositionalConfig(config);
+            config.prediction = false;
+            config.filtering = true;
+            config.filterSamples = 2;
+            config.filterMethod = 0;
+
+            scene.updatePositionalConfig(config);
         }
         canvas.onclick = function () {
             var camera = scene.getCamera();
