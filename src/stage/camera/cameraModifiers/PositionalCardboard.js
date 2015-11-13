@@ -26,6 +26,7 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         timeSinceLastMarker = 0,                    // counter to determine when new marker frame is needed
         lastPosition = new VROne.Vector3(),         // last valid position obtained through marker used for prediction
         predictedTranslation = new VROne.Vector3(), // translation calculated for prediction
+        markerLost = true,                          // indicates if marker is currently present
         isVideoInitialized = false;                 // true if video canvas has same dimensions as video footage
 
     var time = {
@@ -55,9 +56,14 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
 
     cvWorker.addEventListener('message', function(e) {
         if(Array.isArray(e.data)){
+            markerLost = false;
             updatePosition(e.data);
         }else{
-            console.log(e.data);
+            if(e.data == false){
+                markerLost = true;
+            }else{
+                console.log(e.data);
+            }
         }
     }, false);
 
@@ -168,11 +174,9 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
                 initWorker();
                 isVideoInitialized = true;
             }
-            imageData = [];
-            for(var i = 0; i < scope.configuration.imageSamples; i++){
-                context.drawImage(video, 0, 0, videoCanvas.width, videoCanvas.height);              // TODO: interval is too short. video outputs same frame twice
-                imageData.push(context.getImageData(0, 0, videoCanvas.width, videoCanvas.height))
-            }
+
+            context.drawImage(video, 0, 0, videoCanvas.width, videoCanvas.height);
+            imageData = context.getImageData(0, 0, videoCanvas.width, videoCanvas.height).data;
 
             if(!workerRunning) {
                 cvWorker.postMessage({'command': 'update', 'data': imageData});
@@ -180,6 +184,8 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
             }
         }
     };
+
+    var debug;
 
     var updatePosition = function(currentPosition){
 
@@ -190,11 +196,15 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         );
 
         if(scope.configuration.prediction) {
-            predictedTranslation.set(
-                -lastPosition.x + position.x,
-                -lastPosition.y + position.y,
-                -lastPosition.z + position.z
-            );
+            if(markerLost){
+                predictedTranslation.set(0, 0, 0);
+            }else {
+                predictedTranslation.set(
+                    -lastPosition.x + position.x,
+                    -lastPosition.y + position.y,
+                    -lastPosition.z + position.z
+                );
+            }
 
             lastPosition.set(position.x, position.y, position.z);
         }

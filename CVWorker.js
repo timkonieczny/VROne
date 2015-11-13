@@ -68,7 +68,7 @@ var foundMarkers = [],
 var init = function(markerSize, canvasWidth, canvasHeight){
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
-    detector = new AR.Detector();
+    detector = new AR.Detector(canvas.width, canvas.height);
     posit = new POS.Posit(markerSize, canvasWidth);
     self.postMessage("init done");
 };
@@ -81,7 +81,9 @@ var markerPosition = {
 
 var update = function(imageData){
 
-    foundMarkers = detector.detect(imageData[0]);
+    foundMarkers = detector.detect(imageData);
+
+    imageData = null;
 
     if(foundMarkers.length > 0){
         for(var i = 0; i < foundMarkers[0].corners.length; i++){
@@ -98,8 +100,11 @@ var update = function(imageData){
         if (filtering.enabled) {
             markerPosition = filtering.functions[filtering.function](markerPosition);
         }
-    }else if(filtering.enabled){
-        filtering.previousPositions = [];
+    }else{
+        self.postMessage(false);
+        if(filtering.enabled){
+            filtering.previousPositions = [];
+        }
     }
 
     self.postMessage([markerPosition.x, markerPosition.y, -markerPosition.z]);
