@@ -28,9 +28,31 @@ References:
 
 var SVD = SVD || {};
 
+var flag,
+    i,
+    its,
+    j,
+    jj,
+    k,
+    l,
+    nm,
+    anorm,
+    c,
+    f,
+    g,
+    h,
+    s,
+    scale,
+    x,
+    y,
+    z,
+    rv1;
+
 SVD.svdcmp = function(a, m, n, w, v){
-  var flag, i, its, j, jj, k, l, nm,
-      anorm = 0.0, c, f, g = 0.0, h, s, scale = 0.0, x, y, z, rv1 = [];
+  anorm = 0.0;
+  g = 0.0;
+  scale = 0.0;
+  rv1 = [];
       
   //Householder reduction to bidiagonal form
   for (i = 0; i < n; ++ i){
@@ -262,8 +284,13 @@ SVD.svdcmp = function(a, m, n, w, v){
   return true;
 };
 
+var at,
+    bt,
+    ct;
+
 SVD.pythag = function(a, b){
-  var at = Math.abs(a), bt = Math.abs(b), ct;
+  at = Math.abs(a);
+  bt = Math.abs(b);
 
   if (at > bt){
     ct = bt / at;

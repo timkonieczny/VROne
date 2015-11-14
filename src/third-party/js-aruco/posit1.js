@@ -40,8 +40,10 @@ POS.Posit = function(modelSize, focalLength){
   this.init();
 };
 
+var half;
+
 POS.Posit.prototype.buildModel = function(modelSize){
-  var half = modelSize / 2.0;
+  half = modelSize / 2.0;
   
   return [
     [-half,  half, 0.0],
@@ -50,9 +52,19 @@ POS.Posit.prototype.buildModel = function(modelSize){
     [-half, -half, 0.0] ];
 };
 
+var np,
+    vectors,
+    n,
+    len,
+    row,
+    i;
+
 POS.Posit.prototype.init = function(){
-  var np = this.objectPoints.length,
-      vectors = [], n = [], len = 0.0, row = 2, i;
+  np = this.objectPoints.length;
+  vectors = [];
+  n = [];
+  len = 0.0;
+  row = 2;
   
   for (i = 0; i < np; ++ i){
     this.objectVectors[i] = [this.objectPoints[i][0] - this.objectPoints[0][0],
@@ -84,10 +96,27 @@ POS.Posit.prototype.init = function(){
   POS.pseudoInverse(vectors, np, this.objectMatrix);
 };
 
+var posRotation1,
+    posRotation2,
+    posTranslation,
+    rotation1,
+    rotation2,
+    translation1,
+    translation2,
+    error1,
+    error2,
+    valid1,
+    valid2,
+    j;
+
 POS.Posit.prototype.pose = function(imagePoints){
-  var posRotation1 = [[],[],[]], posRotation2 = [[],[],[]], posTranslation = [],
-      rotation1 = [[],[],[]], rotation2 = [[],[],[]], translation1 = [], translation2 = [],
-      error1, error2, valid1, valid2, i, j;
+  posRotation1 = [[],[],[]];
+  posRotation2 = [[],[],[]];
+  posTranslation = [];
+  rotation1 = [[],[],[]];
+  rotation2 = [[],[],[]];
+  translation1 = [];
+  translation2 = [];
 
   this.pos(imagePoints, posRotation1, posRotation2, posTranslation);
 
@@ -121,10 +150,33 @@ POS.Posit.prototype.pose = function(imagePoints){
     new POS.Pose(error2.pixels, rotation2, translation2, error1.pixels, rotation1, translation1);
 };
 
+var imageVectors,
+    i0,
+    j0,
+    ivec,
+    jvec,
+    row1,
+    row2,
+    row3,
+    i0i0,
+    j0j0,
+    i0j0,
+    delta,
+    q,
+    lambda,
+    mu,
+    scale;
+
 POS.Posit.prototype.pos = function(imagePoints, rotation1, rotation2, translation){
-  var np = this.objectPoints.length, imageVectors = [],
-      i0 = [], j0 = [], ivec = [], jvec = [], row1 = [], row2 = [], row3 = [],
-      i0i0, j0j0, i0j0, delta, q, lambda, mu, scale, i, j;
+  np = this.objectPoints.length;
+  imageVectors = [];
+  i0 = [];
+  j0 = [];
+  ivec = [];
+  jvec = [];
+  row1 = [];
+  row2 = [];
+  row3 = [];
 
   for (i = 0; i < np; ++ i){
     imageVectors[i] = [imagePoints[i].x - imagePoints[0].x,
@@ -220,8 +272,13 @@ POS.Posit.prototype.pos = function(imagePoints, rotation1, rotation2, translatio
   translation[2] = this.focalLength / scale;
 };
 
+var zmin,
+    zi;
+
 POS.Posit.prototype.isValid = function(rotation, translation){
-  var np = this.objectPoints.length, zmin = Infinity, i = 0, zi;
+  np = this.objectPoints.length;
+  zmin = Infinity;
+  i = 0;
 
   for (; i < np; ++ i){
     zi = translation[2] +
@@ -236,14 +293,25 @@ POS.Posit.prototype.isValid = function(rotation, translation){
   return zmin >= 0.0;
 };
 
+var oldSopImagePoints,
+    sopImagePoints,
+    converged,
+    iteration,
+    oldImageDifference,
+    imageDifference,
+    factor,
+    error;
+
 POS.Posit.prototype.iterate = function(imagePoints, posRotation, posTranslation, rotation, translation){
-  var np = this.objectPoints.length,
-      oldSopImagePoints = [], sopImagePoints = [],
-      rotation1 = [[],[],[]], rotation2 = [[],[],[]],
-      translation1 = [], translation2 = [],
-      converged = false, iteration = 0,
-      oldImageDifference, imageDifference, factor,
-      error, error1, error2, delta, i, j;
+  np = this.objectPoints.length;
+  oldSopImagePoints = [];
+  sopImagePoints = [];
+  rotation1 = [[],[],[]];
+  rotation2 = [[],[],[]];
+  translation1 = [];
+  translation2 = [];
+  converged = false;
+  iteration = 0;
 
   for (i = 0; i < np; ++ i){
     oldSopImagePoints[i] = {x: imagePoints[i].x,
@@ -425,10 +493,19 @@ POS.Posit.prototype.error = function(imagePoints, rotation, translation){
   return {euclidean: euclidean / np, pixels: pixels, maximum: maximum};
 };
 
+var w,
+    v,
+    s,
+    wmax,
+    cn,
+    k;
+
 POS.pseudoInverse = function(a, n, b){
-  var w = [], v = [[],[],[]], s = [[],[],[]],
-      wmax = 0.0, cn = 0,
-      i, j, k;
+  w = [];
+  v = [[],[],[]];
+  s = [[],[],[]];
+  wmax = 0.0;
+  cn = 0;
 
   SVD.svdcmp(a, n, 3, w, v);
 
