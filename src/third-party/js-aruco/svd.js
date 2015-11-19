@@ -120,7 +120,7 @@ SVD.svdcmp = function(a, m, n, w, v){
     anorm = Math.max(anorm, ( Math.abs( w[i] ) + Math.abs( rv1[i] ) ) );
   }
 
-  //Acumulation of right-hand transformation
+  //Accumulation of right-hand transformation
   for (i = n - 1; i >= 0; -- i){
     if (i < n - 1){
       if (0.0 !== g){

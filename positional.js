@@ -14,10 +14,10 @@ function init() {
             var config = scene.getPositionalConfig();
 
             //config.speed = 1 / 50;
-            //config.updatesPerSecond = 30;
+            config.updatesPerSecond = 30;
             //config.imageSamples = 1;
             config.prediction = false;
-            config.filtering = true;
+            config.filtering = false;
             config.filterSamples = 2;
             config.filterMethod = 0;
 
