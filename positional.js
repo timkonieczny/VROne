@@ -9,7 +9,7 @@ function init() {
     if(vr) {
         var webVRSuccess = scene.useWebVR();
         if (!webVRSuccess) {
-            scene.usePositionalCardboard(80, false, true);
+            scene.usePositionalCardboard(80, false, true, 320);
 
             var config = scene.getPositionalConfig();
 

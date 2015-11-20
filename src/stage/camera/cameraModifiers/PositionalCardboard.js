@@ -3,7 +3,7 @@
  * @class
  * @constructor
  */
-VROne.PositionalCardboard = function (markerSize, showVideo) {
+VROne.PositionalCardboard = function (markerSize, showVideo, videoWidth) {
 
     VROne.CameraModifier.call(this);
 
@@ -69,6 +69,7 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
 
     var addHTMLElements = function(){
         video = document.createElement("video");
+        video.setAttribute("style", "position: fixed; z-index: 2; top: 0px");
         video.setAttribute("autoplay", "true");
         video.setAttribute("style", "display:none");
         videoCanvas = document.createElement("canvas");
@@ -119,7 +120,9 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
                             video: {
                                 optional: [
                                     {sourceId: sourceInfos[i].id},
-                                    {frameRate: 60}
+                                    {frameRate: 60},
+                                    {maxWidth: videoWidth},
+                                    {maxHeight: videoWidth / 4 * 3}
                                 ]
                             }
                         };
@@ -135,9 +138,11 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
                 console.warn("No back-facing camera detected, using front-facing camera.");
                 constraints = {
                     video: {
-                        optional: [{
-                            sourceId: fallBackCamera.id
-                        }]
+                        optional: [
+                            {sourceId: fallBackCamera.id},
+                            {maxWidth: videoWidth},
+                            {maxHeight: videoWidth / 4 * 3}
+                        ]
                     }
                 };
             }
@@ -179,7 +184,7 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
             imageData = context.getImageData(0, 0, videoCanvas.width, videoCanvas.height).data;
 
             if(!workerRunning) {
-                cvWorker.postMessage({'command': 'update', 'data': imageData});
+                cvWorker.postMessage({'data': imageData});
                 workerRunning = true;
             }
         }
@@ -219,11 +224,11 @@ VROne.PositionalCardboard = function (markerSize, showVideo) {
         time.last = time.now;
         timeSinceLastMarker += time.delta;
 
-        if(timeSinceLastMarker>=1000 / scope.configuration.updatesPerSecond && !detectionInProcess){
+        if(timeSinceLastMarker >= 1000 / scope.configuration.updatesPerSecond && !detectionInProcess){
             timeSinceLastMarker = 0;
             updateImageData();
             if(imageData!==undefined) {                                             // from now on camera delivers a continuous data stream
-                cvWorker.postMessage({'command': 'update', 'data': imageData});
+                cvWorker.postMessage({'data': imageData});
                 detectionInProcess = true;
                 needNewData = false;
             }

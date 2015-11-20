@@ -58,7 +58,7 @@ var addHTMLElements = function(){
         var fallBackCamera;
         for (var i = 0; i < sourceInfos.length; i++) {
             if (sourceInfos[i].kind === "video") {
-                if (sourceInfos[i].facing !== "environment") {
+                if (sourceInfos[i].facing == "user") {
                     constraints = {
                         video: {
                             optional: [
