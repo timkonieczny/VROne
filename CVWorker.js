@@ -19,19 +19,15 @@ var foundMarkers = [],
             function(position){ // Average of 2 unfiltered samples from previous frames and data from current frame
                 filtering.updateSamples();
                 filtering.previousPositions[filtering.sampleIndex] = position;
-                var averagePosition = {
-                    x: 0,
-                    y: 0,
-                    z: 0
-                };
+                var averagePosition = [0.0, 0.0, 0.0];
                 for(var i = 0; i < filtering.previousPositions.length; i++){
-                    averagePosition.x += filtering.previousPositions[i].x;
-                    averagePosition.y += filtering.previousPositions[i].y;
-                    averagePosition.z += filtering.previousPositions[i].z;
+                    averagePosition[0] += filtering.previousPositions[i][0];
+                    averagePosition[1] += filtering.previousPositions[i][1];
+                    averagePosition[2] += filtering.previousPositions[i][2];
                 }
-                averagePosition.x /= filtering.samples;
-                averagePosition.y /= filtering.samples;
-                averagePosition.z /= filtering.samples;
+                averagePosition[0] /= filtering.samples;
+                averagePosition[1] /= filtering.samples;
+                averagePosition[2] /= filtering.samples;
                 return averagePosition;
             },
             function(position){ // Average of 2 filtered samples from previous frames and data from current frame
@@ -39,14 +35,14 @@ var foundMarkers = [],
                 var averagePosition = position;
                 for(var i = 0; i < filtering.previousPositions.length; i++){
                     if(i != filtering.sampleIndex){
-                        averagePosition.x += filtering.previousPositions[i].x;
-                        averagePosition.y += filtering.previousPositions[i].y;
-                        averagePosition.z += filtering.previousPositions[i].z;
+                        averagePosition[0] += filtering.previousPositions[i][0];
+                        averagePosition[1] += filtering.previousPositions[i][1];
+                        averagePosition[2] += filtering.previousPositions[i][2];
                     }
                 }
-                averagePosition.x /= filtering.samples;
-                averagePosition.y /= filtering.samples;
-                averagePosition.z /= filtering.samples;
+                averagePosition[0] /= filtering.samples;
+                averagePosition[1] /= filtering.samples;
+                averagePosition[2] /= filtering.samples;
                 filtering.previousPositions[filtering.sampleIndex] = averagePosition;
                 return averagePosition;
             }
@@ -70,14 +66,10 @@ var init = function(markerSize, canvasWidth, canvasHeight){
     canvas.height = canvasHeight;
     detector = new AR.Detector(canvas.width, canvas.height);
     posit = new POS.Posit(markerSize, canvasWidth);
-    self.postMessage("init done");
+    console.log("init done");
 };
 
-var markerPosition = {
-    x: 0,
-    y: 0,
-    z: 0
-};
+var markerPosition = [0.0, 0.0, 0.0];
 
 var update = function(imageData){
 
@@ -93,13 +85,14 @@ var update = function(imageData){
 
         pose = posit.pose(foundMarkers[0].corners);
 
-        markerPosition.x = pose.bestTranslation[0];
-        markerPosition.y = pose.bestTranslation[1];
-        markerPosition.z = pose.bestTranslation[2];
-
         if (filtering.enabled) {
-            markerPosition = filtering.functions[filtering.function](markerPosition);
+            pose.bestTranslation = filtering.functions[filtering.function](pose.bestTranslation);
         }
+
+        markerPosition[0] = pose.bestTranslation[0];
+        markerPosition[1] = pose.bestTranslation[1];
+        markerPosition[2] = -pose.bestTranslation[2];
+
     }else{
         self.postMessage(false);
         if(filtering.enabled){
@@ -107,7 +100,7 @@ var update = function(imageData){
         }
     }
 
-    self.postMessage([markerPosition.x, markerPosition.y, -markerPosition.z]);
+    self.postMessage(markerPosition);
 };
 
 

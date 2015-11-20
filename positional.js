@@ -17,7 +17,7 @@ function init() {
             config.updatesPerSecond = 30;
             //config.imageSamples = 1;
             config.prediction = false;
-            config.filtering = false;
+            config.filtering = true;
             config.filterSamples = 2;
             config.filterMethod = 0;
 
@@ -93,6 +93,8 @@ function init() {
     //var sphere = new VROne.Geometry.Sphere(.5).getO3D(false,10, 10);
     //sphere.position.z = - 1
 
+    renderingFrameDisplay = document.getElementById("rendererFrameRate");
+
     tick();
 }
 window.onload = init;
@@ -109,6 +111,13 @@ var timeObject = {
     startTime: Date.now()
 };
 
+var frameStart = Date.now();
+var frameCount = 0;
+var renderingFrameDisplay;
+//canvas = document.getElementById("canvas");
+
+console.log(renderingFrameDisplay);
+
 var update = function (){
     if(!initDone) {
         timeObject.startTime = Date.now();
@@ -122,7 +131,13 @@ var update = function (){
     tslf = timeObject.time - tslf;
 
     tslf = timeObject.time;
-    //console.log(scene.getCamera().getManager().getGlobalPosition().z);
+
+    frameCount++;
+    if(Date.now() - frameStart > 1000){
+        frameStart = Date.now();
+        renderingFrameDisplay.innerText = frameCount;
+        frameCount = 0;
+    }
 };
 
 

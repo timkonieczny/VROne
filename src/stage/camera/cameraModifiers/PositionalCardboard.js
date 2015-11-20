@@ -54,10 +54,15 @@ VROne.PositionalCardboard = function (markerSize, showVideo, videoWidth) {
         gammaOffset = degToRad(VROne.SensorsHandler.getYaw()+90);
     };
 
+    var cameraFrameDisplay = document.getElementById("cameraFrameRate");
+    var frameStart = Date.now();
+    var frameCount = 0;
+
     cvWorker.addEventListener('message', function(e) {
         if(Array.isArray(e.data)){
             markerLost = false;
             updatePosition(e.data);
+            frameCount++;
         }else{
             if(e.data == false){
                 markerLost = true;
@@ -218,6 +223,12 @@ VROne.PositionalCardboard = function (markerSize, showVideo, videoWidth) {
     };
 
     this.update = function(){
+
+        if(Date.now() - frameStart > 1000){
+            frameStart = Date.now();
+            cameraFrameDisplay.innerText = frameCount;
+            frameCount = 0;
+        }
 
         time.now = Date.now();
         time.delta = time.now - time.last;
