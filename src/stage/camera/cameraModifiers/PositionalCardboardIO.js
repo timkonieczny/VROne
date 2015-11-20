@@ -3,7 +3,7 @@
  * @class
  * @constructor
  */
-VROne.PositionalCardboard = function (markerSize, showVideo, videoWidth) {
+VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth) {
 
     VROne.CameraModifier.call(this);
 

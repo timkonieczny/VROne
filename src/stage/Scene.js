@@ -87,13 +87,13 @@ VROne.Scene = function (canvas) {
      */
     this.usePositionalCardboard = function(markerSize, distorted, showVideo, videoWidth){
         this.setRendererVR(distorted);
-        camera.getManager().modifiers.push(new VROne.PositionalCardboard(markerSize, showVideo, videoWidth));
+        camera.getManager().modifiers.push(new VROne.PositionalCardboardIO(markerSize, showVideo, videoWidth));
         camera.useVR = true;
         this.resize();
 
         this.getPositionalConfig = function(){
             for(var i = 0; i < camera.getManager().modifiers.length; i++){
-                if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboard){
+                if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboardIO){
                     return camera.getManager().modifiers[i].configuration;
                 }
             }
@@ -101,7 +101,7 @@ VROne.Scene = function (canvas) {
 
         this.updatePositionalConfig = function(config){
             for(var i = 0; i < camera.getManager().modifiers.length; i++){
-                if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboard){
+                if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboardIO){
                     camera.getManager().modifiers[i].configuration = config;
                 }
             }
