@@ -111,6 +111,8 @@ var detectMarkerStructure = function(imageData){
     self.postMessage(markerPosition);
 };
 
+var usedMarkerIndex;
+
 var update = function(imageData){
 
     foundMarkers = detector.detect(imageData);
@@ -118,12 +120,21 @@ var update = function(imageData){
     imageData = null;
 
     if(foundMarkers.length > 0){
-        for (var i = 0; i < foundMarkers[0].corners.length; i++) {
-            foundMarkers[0].corners[i].x -= canvas.width / 2;
-            foundMarkers[0].corners[i].y = -foundMarkers[0].corners[i].y + canvas.height / 2;
+        usedMarkerIndex = 0;
+
+        for(var i = 0; i < foundMarkers.length; i++){
+            if(foundMarkers[i].id == primaryMarker.id){
+                usedMarkerIndex = i;
+                break;
+            }
         }
 
-        if(foundMarkers[0].id != primaryMarker.id) {
+        for (i = 0; i < foundMarkers[usedMarkerIndex].corners.length; i++) {
+            foundMarkers[usedMarkerIndex].corners[i].x -= canvas.width / 2;
+            foundMarkers[usedMarkerIndex].corners[i].y = -foundMarkers[usedMarkerIndex].corners[i].y + canvas.height / 2;
+        }
+
+        if(foundMarkers[usedMarkerIndex].id != primaryMarker.id) {
             var currentScale = foundMarkers[0].corners[1].x - foundMarkers[0].corners[0].x;
 
             for(i = 0; i < secondaryMarkers.length; i++){
@@ -136,7 +147,7 @@ var update = function(imageData){
                 }
             }
         }
-        pose = posit.pose(foundMarkers[0].corners);
+        pose = posit.pose(foundMarkers[usedMarkerIndex].corners);
 
         if (filtering.enabled) {
             pose.bestTranslation = filtering.functions[filtering.function](pose.bestTranslation);
