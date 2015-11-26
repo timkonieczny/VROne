@@ -3,7 +3,7 @@
  * @class
  * @constructor
  */
-VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth) {
+VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numberOfMarkers) {
 
     VROne.CameraModifier.call(this);
 
@@ -58,16 +58,19 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth) {
     var frameStart = Date.now();
     var frameCount = 0;
 
+    var trackingInfoDisplay = document.getElementById("trackingInfo");
+
     cvWorker.addEventListener('message', function(e) {
         if(Array.isArray(e.data)){
             markerLost = false;
             updatePosition(e.data);
             frameCount++;
         }else{
-            if(e.data == false){
-                markerLost = true;
-            }else{
-                console.log(e.data);
+            switch (e.data){
+                case -1: markerLost = true; break;
+                case -2: trackingInfoDisplay.innerHTML = "marker position learning in progress"; break;
+                case -3: trackingInfoDisplay.innerHTML = "learning process completed"; break;
+                default: console.log(e.data);
             }
         }
     }, false);
@@ -169,7 +172,7 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth) {
     initCamera();
 
     var initWorker = function(){
-        cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': videoCanvas.width, 'canvasHeight': videoCanvas.height});
+        cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': videoCanvas.width, 'canvasHeight': videoCanvas.height, 'numberOfMarkers': numberOfMarkers});
     };
 
     this.updateConfiguration = function(){

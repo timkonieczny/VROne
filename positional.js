@@ -9,7 +9,7 @@ function init() {
     if(vr) {
         var webVRSuccess = scene.useWebVR();
         if (!webVRSuccess) {
-            scene.usePositionalCardboard(80, false, true, 320);
+            scene.usePositionalCardboard(80, false, true, 120, 4);
 
             var config = scene.getPositionalConfig();
 
@@ -18,7 +18,7 @@ function init() {
             //config.imageSamples = 1;
             config.prediction = false;
             config.filtering = true;
-            config.filterSamples = 2;
+            config.filterSamples = 3;
             config.filterMethod = 0;
 
             scene.updatePositionalConfig(config);
