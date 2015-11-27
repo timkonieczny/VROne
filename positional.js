@@ -17,9 +17,11 @@ function init() {
             config.updatesPerSecond = 30;
             //config.imageSamples = 1;
             config.prediction = false;
-            config.filtering = true;
+            config.filtering = false;
             config.filterSamples = 3;
             config.filterMethod = 0;
+            config.lowpass = true;
+            config.lowpassThreshold = 10;
 
             scene.updatePositionalConfig(config);
         }
@@ -114,9 +116,6 @@ var timeObject = {
 var frameStart = Date.now();
 var frameCount = 0;
 var renderingFrameDisplay;
-//canvas = document.getElementById("canvas");
-
-console.log(renderingFrameDisplay);
 
 var update = function (){
     if(!initDone) {

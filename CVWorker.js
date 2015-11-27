@@ -67,6 +67,7 @@ var init = function(markerSize, canvasWidth, canvasHeight, numberOfMarkers){
     detector = new AR.Detector(canvas.width, canvas.height);
     posit = new POS.Posit(markerSize, canvasWidth);
     totalMarkers = numberOfMarkers;
+    centerMarkerIndex = Math.floor(numberOfMarkers / 2)
 };
 
 var markerPosition = [0.0, 0.0, 0.0];
@@ -75,8 +76,15 @@ var totalMarkers;
 var isStructureDetected = false;
 var primaryMarker;
 var secondaryMarkers = [];
+var centerMarkerIndex;
+var learningFramesNeeded = 1;
+var learningFramesFound = 0;
 
-var detectMarkerStructure = function(imageData){
+var lowpassEnabled = false;
+var lowpassThreshold = 10;
+var lastPosition = [];
+
+var learnMarkerStructure = function(imageData){
     foundMarkers = detector.detect(imageData);
 
     imageData = null;
@@ -88,25 +96,56 @@ var detectMarkerStructure = function(imageData){
                 foundMarkers[i].corners[j].y = -foundMarkers[i].corners[j].y + canvas.height / 2;
             }
         }
-
-        isStructureDetected = true;
-        primaryMarker = {
-            id: foundMarkers[0].id,
-            scale: foundMarkers[0].corners[1].x - foundMarkers[0].corners[0].x,
-            position: foundMarkers[0].corners[0]
-        };
-        for(i = 1; i < foundMarkers.length; i++){
-            secondaryMarkers.push({
-                id: foundMarkers[i].id,
-                distanceToPrimaryMarker: {
-                    x: primaryMarker.position.x - foundMarkers[i].corners[0].x,
-                    y: primaryMarker.position.y - foundMarkers[i].corners[0].y
+        if(primaryMarker == undefined) {    // initialize primary and secondary markers
+            primaryMarker = {
+                id: foundMarkers[centerMarkerIndex].id,
+                scale: foundMarkers[centerMarkerIndex].corners[1].x - foundMarkers[centerMarkerIndex].corners[0].x,
+                position: foundMarkers[centerMarkerIndex].corners[0]
+            };
+            for (i = 0; i < foundMarkers.length; i++) {
+                if (i != centerMarkerIndex) {
+                    secondaryMarkers.push({
+                        id: foundMarkers[i].id,
+                        distanceToPrimaryMarker: {
+                            x: foundMarkers[i].corners[0].x,
+                            y: foundMarkers[i].corners[0].y
+                        }
+                    })
                 }
-            })
+            }
+        }else{                                  // improve primary and secondary markers
+            for (i = 0; i < foundMarkers.length; i++) {
+                if(foundMarkers[i].id == primaryMarker.id){
+                    primaryMarker.scale += foundMarkers[centerMarkerIndex].corners[1].x - foundMarkers[centerMarkerIndex].corners[0].x;
+                    primaryMarker.position.x += foundMarkers[centerMarkerIndex].corners[0].x;
+                    primaryMarker.position.y += foundMarkers[centerMarkerIndex].corners[0].y;
+                }else {
+                    for (j = 0; j < secondaryMarkers.length; j++) {
+                        if (foundMarkers[i].id == secondaryMarkers[j].id) {
+                            secondaryMarkers[j].distanceToPrimaryMarker.x += foundMarkers[i].corners[0].x;
+                            secondaryMarkers[j].distanceToPrimaryMarker.y += foundMarkers[i].corners[0].y;
+                        }
+                    }
+                }
+            }
         }
-        self.postMessage(-3);
+        learningFramesFound++;
     }else{
         self.postMessage(-2);
+    }
+    if(learningFramesFound == learningFramesNeeded){
+        primaryMarker.scale /= learningFramesNeeded;
+        primaryMarker.position.x /= learningFramesNeeded;
+        primaryMarker.position.y /= learningFramesNeeded;
+        for(i = 0; i < secondaryMarkers.length; i++){
+            secondaryMarkers[i].distanceToPrimaryMarker.x /= learningFramesNeeded;
+            secondaryMarkers[i].distanceToPrimaryMarker.y /= learningFramesNeeded;
+            secondaryMarkers[i].distanceToPrimaryMarker.x = primaryMarker.position.x - secondaryMarkers[i].distanceToPrimaryMarker.x;
+            secondaryMarkers[i].distanceToPrimaryMarker.y = primaryMarker.position.y - secondaryMarkers[i].distanceToPrimaryMarker.y;
+        }
+
+        isStructureDetected = true;
+        self.postMessage(-3);
     }
     self.postMessage(markerPosition);
 };
@@ -153,6 +192,35 @@ var update = function(imageData){
             pose.bestTranslation = filtering.functions[filtering.function](pose.bestTranslation);
         }
 
+        // ============== low pass ==============
+        if(lowpassEnabled) {
+            if (lastPosition.length == 0) {
+                lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
+            } else {
+                if (Math.abs(lastPosition[0] - pose.bestTranslation[0]) > lowpassThreshold) {
+                    //console.log(Math.abs(lastPosition[0] - pose.bestTranslation[0]) + " x too high");
+                    //console.log("x: " + pose.bestTranslation[0] + " -> " + (lastPosition[0] + pose.bestTranslation[0]) / 2);
+                    pose.bestTranslation[0] = (lastPosition[0] + pose.bestTranslation[0]) / 2;
+                    //pose.bestTranslation[0] = lastPosition[0];
+                }
+                if (Math.abs(lastPosition[1] - pose.bestTranslation[1]) > lowpassThreshold) {
+                    //console.log(Math.abs(lastPosition[1] - pose.bestTranslation[1]) + " y too high");
+                    //console.log("y: " + pose.bestTranslation[1] + " -> " + (lastPosition[1] + pose.bestTranslation[1]) / 2);
+                    pose.bestTranslation[1] = (lastPosition[1] + pose.bestTranslation[1]) / 2;
+                    //pose.bestTranslation[1] = lastPosition[1];
+                }
+                if (Math.abs(lastPosition[2] - pose.bestTranslation[2]) > lowpassThreshold) {
+                    //console.log(Math.abs(lastPosition[2] - pose.bestTranslation[2]) + " z too high");
+                    //console.log("z: " + pose.bestTranslation[2] + " -> " + (lastPosition[2] + pose.bestTranslation[2]) / 2);
+                    pose.bestTranslation[2] = (lastPosition[2] + pose.bestTranslation[2]) / 2;
+                    //pose.bestTranslation[2] = lastPosition[2];
+                }
+                lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
+                //console.log("=========================");
+            }
+        }
+        // ======================================
+
         markerPosition[0] = pose.bestTranslation[0];
         markerPosition[1] = pose.bestTranslation[1];
         markerPosition[2] = -pose.bestTranslation[2];
@@ -173,7 +241,7 @@ self.addEventListener('message', function(e) {
         if(isStructureDetected) {
             update(e.data.data);
         }else{
-            detectMarkerStructure(e.data.data);
+            learnMarkerStructure(e.data.data);
         }
     }else if(e.data.markerSize !== undefined){
         init(e.data.markerSize, e.data.canvasWidth, e.data.canvasHeight, e.data.numberOfMarkers);
@@ -181,5 +249,7 @@ self.addEventListener('message', function(e) {
         filtering.enabled = e.data.filtering;
         filtering.samples = e.data.filterSamples;
         filtering.function = e.data.filterMethod;
+        lowpassEnabled = e.data.lowpass;
+        lowpassThreshold = e.data.lowpassThreshold
     }
 }, false);
