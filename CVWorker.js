@@ -197,26 +197,16 @@ var update = function(imageData){
             if (lastPosition.length == 0) {
                 lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
             } else {
-                if (Math.abs(lastPosition[0] - pose.bestTranslation[0]) > lowpassThreshold) {
-                    //console.log(Math.abs(lastPosition[0] - pose.bestTranslation[0]) + " x too high");
-                    //console.log("x: " + pose.bestTranslation[0] + " -> " + (lastPosition[0] + pose.bestTranslation[0]) / 2);
+                if (Math.abs(lastPosition[0] - pose.bestTranslation[0]) > lowpassThreshold)
                     pose.bestTranslation[0] = (lastPosition[0] + pose.bestTranslation[0]) / 2;
-                    //pose.bestTranslation[0] = lastPosition[0];
-                }
-                if (Math.abs(lastPosition[1] - pose.bestTranslation[1]) > lowpassThreshold) {
-                    //console.log(Math.abs(lastPosition[1] - pose.bestTranslation[1]) + " y too high");
-                    //console.log("y: " + pose.bestTranslation[1] + " -> " + (lastPosition[1] + pose.bestTranslation[1]) / 2);
+
+                if (Math.abs(lastPosition[1] - pose.bestTranslation[1]) > lowpassThreshold)
                     pose.bestTranslation[1] = (lastPosition[1] + pose.bestTranslation[1]) / 2;
-                    //pose.bestTranslation[1] = lastPosition[1];
-                }
-                if (Math.abs(lastPosition[2] - pose.bestTranslation[2]) > lowpassThreshold) {
-                    //console.log(Math.abs(lastPosition[2] - pose.bestTranslation[2]) + " z too high");
-                    //console.log("z: " + pose.bestTranslation[2] + " -> " + (lastPosition[2] + pose.bestTranslation[2]) / 2);
+
+                if (Math.abs(lastPosition[2] - pose.bestTranslation[2]) > lowpassThreshold)
                     pose.bestTranslation[2] = (lastPosition[2] + pose.bestTranslation[2]) / 2;
-                    //pose.bestTranslation[2] = lastPosition[2];
-                }
+
                 lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
-                //console.log("=========================");
             }
         }
         // ======================================

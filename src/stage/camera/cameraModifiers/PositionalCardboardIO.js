@@ -8,36 +8,76 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
     VROne.CameraModifier.call(this);
 
     var scope = this,
+
+        // Video
         video,                                      // HTML5 video element
         videoCanvas,                                // canvas used for marker detection
         context,                                    // 2D canvas for video
         imageData,                                  // video data
-        orientation = new VROne.Quaternion(),
-        position = new VROne.Vector3(),             // current position
-        detectionInProcess = false,                     // indicates if worker is currently processing image data
+        isVideoInitialized = false,                 // true if video canvas has same dimensions as video footage
+
+        // Marker detection
+        detectionInProcess = false,                 // indicates if worker is currently processing image data
+        timeSinceLastMarker = 0,                    // counter to determine when new marker frame is needed
+        markerLost = true,                          // indicates if marker is currently present
         workerRunning = false,                      // indicates if worker is currently running
         cvWorker = new Worker("CVWorker.js"),       // worker that handles image processing
-        alpha = 0,
-        beta = 0,
-        gamma = 0,
-        alphaOffset = 0,                            // offset used for sensor calibration
-        gammaOffset = 0,                            // offset used for sensor calibration
-        timeSinceLastMarker = 0,                    // counter to determine when new marker frame is needed
+
+        // Prediction
         lastPosition = new VROne.Vector3(),         // last valid position obtained through marker used for prediction
         predictedTranslation = new VROne.Vector3(), // translation calculated for prediction
-        markerLost = true,                          // indicates if marker is currently present
-        isVideoInitialized = false;                 // true if video canvas has same dimensions as video footage
 
-    var time = {
-        now: Date.now(),
-        last: Date.now(),
-        delta: 0
+        // Orientation / position
+        orientation = new VROne.Quaternion(),       // current orientation
+        position = new VROne.Vector3(),             // current position
+
+        // Sensor
+        alpha = 0,                                  // sensor orientation
+        beta = 0,                                   // sensor orientation
+        gamma = 0,                                  // sensor orientation
+        alphaOffset = 0,                            // offset used for sensor calibration
+        gammaOffset = 0,                            // offset used for sensor calibration
+
+        // Time
+        time = {
+            now: Date.now(),
+            last: Date.now(),
+            delta: 0,
+            update: function(){
+                this.now = Date.now();
+                this.delta = this.now - this.last;
+                this.last = this.now;
+            }
+        },
+
+        // Info displays
+        frameCounter = {
+            display: document.getElementById("cameraFrameRate"),
+            time: 0,
+            count: 0,
+            update: function(){
+                this.time += time.delta;
+                if(this.time > 1000){
+                    this.time = 0;
+                    this.display.innerText = this.count;
+                    this.count = 0;
+                }
+            }
+        },
+        trackingInfoDisplay = document.getElementById("trackingInfo");
+
+    var degToRad = function(degrees){
+        return degrees * Math.PI / 180;
+    };
+    document.getElementById("setDefaultOrientation").onclick = function(){
+        alphaOffset = degToRad(-VROne.SensorsHandler.getRoll()+180);
+        gammaOffset = degToRad(VROne.SensorsHandler.getYaw()+90);
     };
 
+    // Default configuration for positional tracking
     this.configuration = {
         speed: 1 / 1000,
         updatesPerSecond: 30,
-        imageSamples: 1,
         prediction: false,
         filterSamples: 1,
         filtering: false,
@@ -46,26 +86,21 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
         lowpassThreshold: 10
     };
 
-    var degToRad = function(degrees){
-        return degrees * Math.PI / 180;
+    this.updateConfiguration = function(){
+        cvWorker.postMessage({
+            'filtering': scope.configuration.filtering,
+            'filterMethod': scope.configuration.filterMethod,
+            'filterSamples': scope.configuration.filterSamples,
+            'lowpass': scope.configuration.lowpass,
+            'lowpassThreshold': scope.configuration.lowpassThreshold});
     };
 
-    document.getElementById("setDefaultOrientation").onclick = function(){
-        alphaOffset = degToRad(-VROne.SensorsHandler.getRoll()+180);
-        gammaOffset = degToRad(VROne.SensorsHandler.getYaw()+90);
-    };
-
-    var cameraFrameDisplay = document.getElementById("cameraFrameRate");
-    var frameStart = Date.now();
-    var frameCount = 0;
-
-    var trackingInfoDisplay = document.getElementById("trackingInfo");
-
+    // Callback for worker
     cvWorker.addEventListener('message', function(e) {
         if(Array.isArray(e.data)){
             markerLost = false;
             updatePosition(e.data);
-            frameCount++;
+            frameCounter.count++;
         }else{
             switch (e.data){
                 case -1: markerLost = true; break;
@@ -89,7 +124,6 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
         document.body.insertBefore(video, document.body.firstChild);
         document.body.insertBefore(videoCanvas, video);
     };
-
     addHTMLElements();
 
     var initCamera = function(){
@@ -169,20 +203,10 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
             MediaStreamTrack.getSources(getEnvironmentCamera);
         }
     };
-
     initCamera();
 
     var initWorker = function(){
         cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': videoCanvas.width, 'canvasHeight': videoCanvas.height, 'numberOfMarkers': numberOfMarkers});
-    };
-
-    this.updateConfiguration = function(){
-        cvWorker.postMessage({
-            'filtering': scope.configuration.filtering,
-            'filterMethod': scope.configuration.filterMethod,
-            'filterSamples': scope.configuration.filterSamples,
-            'lowpass': scope.configuration.lowpass,
-            'lowpassThreshold': scope.configuration.lowpassThreshold});
     };
 
     var updateImageData = function(){
@@ -203,8 +227,6 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
             }
         }
     };
-
-    var debug;
 
     var updatePosition = function(currentPosition){
 
@@ -233,17 +255,10 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
 
     this.update = function(){
 
-        if(Date.now() - frameStart > 1000){
-            frameStart = Date.now();
-            cameraFrameDisplay.innerText = frameCount;
-            frameCount = 0;
-        }
+        time.update();
 
-        time.now = Date.now();
-        time.delta = time.now - time.last;
-        time.last = time.now;
+        // Update position
         timeSinceLastMarker += time.delta;
-
         if(timeSinceLastMarker >= 1000 / scope.configuration.updatesPerSecond && !detectionInProcess){
             timeSinceLastMarker = 0;
             updateImageData();
@@ -258,10 +273,8 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
                 predictedTranslation.z * time.delta / (1000 / scope.configuration.updatesPerSecond));
         }
 
-        if(timeSinceLastMarker >= 1000 / scope.configuration.updatesPerSecond && !detectionInProcess) {
-        }
-
-            alpha = degToRad(-VROne.SensorsHandler.getRoll()+180);
+        // Update orientation
+        alpha = degToRad(-VROne.SensorsHandler.getRoll()+180);
         beta = degToRad(-VROne.SensorsHandler.getPitch());
         gamma = degToRad(VROne.SensorsHandler.getYaw()+90);
         if(gammaOffset > Math.PI / 2) {
@@ -271,6 +284,7 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
             gamma -= gammaOffset;
             alpha -= alphaOffset;
         }
+
         var c1 = Math.cos(alpha/2);
         var c2 = Math.cos(beta/2);
         var c3 = Math.cos(gamma/2);
@@ -284,6 +298,9 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
             -(c1*s2*c3 - s1*c2*s3),
             c1*c2*c3 - s1*s2*s3
         );
+
+        // Update frame info
+        frameCounter.update();
     };
 
     /**

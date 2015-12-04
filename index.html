@@ -1,10 +1,10 @@
-<html>
+<html xmlns:color="http://www.w3.org/1999/xhtml">
     <head>
         <title>Positional Tracking Demo</title>
         <meta http-equiv="content-type" content="text/html, charset=ISO-8859-1">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
 
-        <script src="https://cdn.socket.io/socket.io-1.2.0.js" ></script>
+        <!--<script src="https://cdn.socket.io/socket.io-1.2.0.js" ></script>-->
 
         <!--<script src="src/third-party/js-aruco/aruco.js" ></script>-->
         <!--<script src="src/third-party/js-aruco/cv.js" ></script>-->
@@ -71,7 +71,7 @@
 
 
     <body style="border: none; margin: 0;">
-        <p id="frameRates" style="position: fixed; top: 0; right: 0; z-index: 3; text-align: right; font-family: monospace">camera: <span id="cameraFrameRate"></span></br>renderer: <span id="rendererFrameRate"></span></br><span id="trackingInfo"></span></p>
+        <p id="frameRates" style="position: fixed; top: 0; right: 0; z-index: 3; text-align: right; font-family: monospace; color: #FFFFFF">camera: <span id="cameraFrameRate"></span></br>renderer: <span id="rendererFrameRate"></span></br><span id="trackingInfo"></span></p>
         <button id="setDefaultOrientation" style="margin: 0; position: fixed; z-index: 3; top: 0px">Reset camera orientation </button>
         <div style="width: 100%; height: 100%;">
             <canvas id="canvas" style="border: none; margin: 0;z-index: 1"></canvas>

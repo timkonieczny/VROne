@@ -1,62 +1,89 @@
 var scene;
 var canvas;
+
+var icosahedron;
+var icoRotation = new VROne.Vector3();
+var icoRotationScale = new VROne.Vector3(Math.random() * 0.0001, Math.random() * 0.0001, Math.random() * 0.0001);
+
+// Used to create animation frames
+var timeObject = {
+    time: 0,
+    startTime: Date.now(),
+    tslf: 0,
+    initDone: false,
+    startAnimation: function(){
+        if(!this.initDone) {
+            this.startTime = Date.now();
+            this.initDone = true;
+        }
+        this.time = Date.now() - this.startTime;
+        this.tslf = this.time - this.tslf;
+    },
+    endAnimation: function(){
+        this.tslf = this.time;
+    }
+};
+
+// Frame counter
+var frameCounter = {
+    startTime: Date.now(),
+    count: 0,
+    display: undefined,
+    update: function(){
+        this.count++;
+        if(Date.now() - this.startTime > 1000){
+            this.startTime = Date.now();
+            this.display.innerText = this.count;
+            this.count = 0;
+        }
+    }
+};
+
+// Initialize scene
 function init() {
+    // Connect to HTML elements and create new scene using HTML canvas
+    frameCounter.display = document.getElementById("rendererFrameRate");
     canvas = document.getElementById("canvas");
+    canvas.onclick = function () {
+        var camera = scene.getCamera();
+        camera.setFullscreen(!camera.isFullscreen(), canvas);
+
+        if ('orientation' in screen) {
+            if(camera.isFullscreen()){
+                screen.orientation.lock('landscape-primary');
+            }
+            else{
+                screen.orientation.unlock();
+            }
+        }
+
+    };
     scene = new VROne.Scene(canvas);
 
-    var vr = true;
+    // Set up VR view for Google Cardboard with positional tracking
+    // Arguments: markerSize, distorted, showVideo, videoWidth, numberOfMarkers
+    scene.usePositionalCardboard(80, false, true, 120, 1);
+    // Adjust positional tracking configuration
+    var config = scene.getPositionalConfig();
+    //config.speed = 1 / 50;
+    config.updatesPerSecond = 30;
+    config.prediction = false;
+    config.filtering = false;
+    config.filterSamples = 3;
+    config.filterMethod = 0;
+    config.lowpass = true;
+    config.lowpassThreshold = 10;
+    scene.updatePositionalConfig(config);
 
-    if(vr) {
-        var webVRSuccess = scene.useWebVR();
-        if (!webVRSuccess) {
-            scene.usePositionalCardboard(80, false, true, 120, 4);
-
-            var config = scene.getPositionalConfig();
-
-            //config.speed = 1 / 50;
-            config.updatesPerSecond = 30;
-            //config.imageSamples = 1;
-            config.prediction = false;
-            config.filtering = false;
-            config.filterSamples = 3;
-            config.filterMethod = 0;
-            config.lowpass = true;
-            config.lowpassThreshold = 10;
-
-            scene.updatePositionalConfig(config);
-        }
-        canvas.onclick = function () {
-            var camera = scene.getCamera();
-            camera.setFullscreen(!camera.isFullscreen(), canvas);
-
-            if ('orientation' in screen) {
-                if(camera.isFullscreen()){
-                    screen.orientation.lock('landscape-primary');
-                }
-                else{
-                    screen.orientation.unlock();
-                }
-            }
-
-        };
-    }else{
-        scene.setRendererDesktop();
-        scene.getCamera().getManager().modifiers.push(new VROne.MouseKeyboard(canvas, canvas));
-    }
-
-    var cameraModifier = new VROne.CameraModifier();
-    scene.getCamera().getManager().modifiers.push(cameraModifier);
-    scene.getCamera().farPlane = 1000;
-    scene.getCamera().updateProjectionMatrix();
-
-    //Set Light Properties
+    // Set Light Properties
     var light = new VROne.Light();
     light.position.x = 5;
     light.position.y = 5;
     light.position.z = 0;
     scene.addToScene(light);
 
-    skybox = new VROne.Skybox(
+    // Add objects to the scene
+    scene.addToScene(new VROne.Skybox(
         "alpine_back.jpg",
         "alpine_front.jpg",
         "alpine_top.jpg",
@@ -65,26 +92,7 @@ function init() {
         "alpine_left.jpg",
         "assets/",
         scene.getCamera().getManager(),
-        scene.getCamera().farPlane);
-    scene.addToScene(skybox);
-
-    //var icosahedron = new VROne.Geometry.Icosahedron(2).getO3D();
-    //icosahedron.position.z = -2;
-    //scene.addToScene(icosahedron);
-    //
-    //var icosahedron2 = new VROne.Geometry.Icosahedron(2).getO3D();
-    //icosahedron2.position.y = -10;
-    //scene.addToScene(icosahedron2);
-
-    var cubeHeight = 0.1;
-    var cubeWidth = 0.1;
-    var cubeDepth = 0.1;
-
-    var cube = new VROne.Geometry.Box(cubeWidth, cubeHeight, cubeDepth).getO3D(false);
-    cube.position.z = -0.3 - cubeDepth;
-    cube.position.x = -cubeWidth / 2;
-    cube.position.y = -cubeHeight / 2;
-    scene.addToScene(cube);
+        scene.getCamera().farPlane));
 
     var floor = new VROne.OBJLoader("assets/floor.obj")[0];
     floor.position.y = -1;
@@ -92,53 +100,33 @@ function init() {
     floor.transparent = true;
     scene.addToScene(floor);
 
-    //var sphere = new VROne.Geometry.Sphere(.5).getO3D(false,10, 10);
-    //sphere.position.z = - 1
-
-    renderingFrameDisplay = document.getElementById("rendererFrameRate");
+    icosahedron = new VROne.Geometry.Icosahedron(2).getO3D(false);
+    icosahedron.position.set(0.0, 0.0, -2.0);
+    icosahedron.scale.set(0.5, 0.5, 0.5);
+    icosahedron.colors = [];
+    for(var i = 0; i < (icosahedron.vertices.length/3)*4; i+=4){
+        icosahedron.colors[i] = 1.0;
+        icosahedron.colors[i + 1] = 0.211;
+        icosahedron.colors[i + 2] = 0.0;
+        icosahedron.colors[i + 3] = 1.0;
+    }
+    scene.addToScene(icosahedron);
 
     tick();
 }
 window.onload = init;
 
-
-var skybox;
-var tslf = 0;
-
-var initDone = false;
-
-////////////////////////////////////////////////////////////////////
-var timeObject = {
-    time: 0,
-    startTime: Date.now()
-};
-
-var frameStart = Date.now();
-var frameCount = 0;
-var renderingFrameDisplay;
-
+// Update 3D object properties
 var update = function (){
-    if(!initDone) {
-        timeObject.startTime = Date.now();
-        initDone = true;
-    }else{
-        scene.render = true;
-    }
+    timeObject.startAnimation();
+    icoRotation.x += timeObject.tslf * icoRotationScale.x;
+    icoRotation.y += timeObject.tslf * icoRotationScale.y;
+    icoRotation.z += timeObject.tslf * icoRotationScale.z;
+    icosahedron.rotation.fromEulerAngles(icoRotation.x, icoRotation.y, icoRotation.z);
+    timeObject.endAnimation();
 
-    timeObject.time = Date.now() - timeObject.startTime;
-
-    tslf = timeObject.time - tslf;
-
-    tslf = timeObject.time;
-
-    frameCount++;
-    if(Date.now() - frameStart > 1000){
-        frameStart = Date.now();
-        renderingFrameDisplay.innerText = frameCount;
-        frameCount = 0;
-    }
+    frameCounter.update();
 };
-
 
 var tick = function () {
     VROne.requestAnimFrame(tick);
