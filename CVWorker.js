@@ -6,11 +6,23 @@ importScripts(
     "src/third-party/js-aruco/svd.js"
 );
 
-var foundMarkers = [],
-    detector,
+var detector,
     posit,
     pose,
     canvas = {},
+
+    markerPosition = [0.0, 0.0, 0.0],
+    foundMarkers = [],
+
+    totalMarkers,
+    primaryMarker,
+    secondaryMarkers = [],
+    usedMarkerIndex,
+    centerMarkerIndex,
+    learningFramesNeeded = 1,
+    learningFramesFound = 0,
+    allMarkersDetected = false,
+
     filtering = {
         enabled: false,
         samples: 2,
@@ -58,9 +70,12 @@ var foundMarkers = [],
         },
         previousPositions: [],
         sampleIndex: 0
-    };
+    },
+    lowpassEnabled = false,
+    lowpassThreshold = 10,
+    lastPosition = [];
 
-
+// Initialize marker detection
 var init = function(markerSize, canvasWidth, canvasHeight, numberOfMarkers){
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
@@ -70,20 +85,7 @@ var init = function(markerSize, canvasWidth, canvasHeight, numberOfMarkers){
     centerMarkerIndex = Math.floor(numberOfMarkers / 2)
 };
 
-var markerPosition = [0.0, 0.0, 0.0];
-
-var totalMarkers;
-var isStructureDetected = false;
-var primaryMarker;
-var secondaryMarkers = [];
-var centerMarkerIndex;
-var learningFramesNeeded = 1;
-var learningFramesFound = 0;
-
-var lowpassEnabled = false;
-var lowpassThreshold = 10;
-var lastPosition = [];
-
+// Detect present markers and set primary marker
 var learnMarkerStructure = function(imageData){
     foundMarkers = detector.detect(imageData);
 
@@ -113,7 +115,7 @@ var learnMarkerStructure = function(imageData){
                     })
                 }
             }
-        }else{                                  // improve primary and secondary markers
+        }else{                              // improve primary and secondary markers by including multiple frames
             for (i = 0; i < foundMarkers.length; i++) {
                 if(foundMarkers[i].id == primaryMarker.id){
                     primaryMarker.scale += foundMarkers[centerMarkerIndex].corners[1].x - foundMarkers[centerMarkerIndex].corners[0].x;
@@ -143,20 +145,17 @@ var learnMarkerStructure = function(imageData){
             secondaryMarkers[i].distanceToPrimaryMarker.x = primaryMarker.position.x - secondaryMarkers[i].distanceToPrimaryMarker.x;
             secondaryMarkers[i].distanceToPrimaryMarker.y = primaryMarker.position.y - secondaryMarkers[i].distanceToPrimaryMarker.y;
         }
-
-        isStructureDetected = true;
+        allMarkersDetected = true;
         self.postMessage(-3);
     }
     self.postMessage(markerPosition);
 };
 
-var usedMarkerIndex;
-
+// Update marker positions and pose and return new camera position
 var update = function(imageData){
 
+    // Detect Markers
     foundMarkers = detector.detect(imageData);
-
-    imageData = null;
 
     if(foundMarkers.length > 0){
         usedMarkerIndex = 0;
@@ -167,12 +166,13 @@ var update = function(imageData){
                 break;
             }
         }
-
+        // Correct marker coordinate system
         for (i = 0; i < foundMarkers[usedMarkerIndex].corners.length; i++) {
             foundMarkers[usedMarkerIndex].corners[i].x -= canvas.width / 2;
             foundMarkers[usedMarkerIndex].corners[i].y = -foundMarkers[usedMarkerIndex].corners[i].y + canvas.height / 2;
         }
 
+        // Correct marker board scale
         if(foundMarkers[usedMarkerIndex].id != primaryMarker.id) {
             var currentScale = foundMarkers[0].corners[1].x - foundMarkers[0].corners[0].x;
 
@@ -186,13 +186,16 @@ var update = function(imageData){
                 }
             }
         }
+
+        // Obtain marker pose
         pose = posit.pose(foundMarkers[usedMarkerIndex].corners);
 
+        // Filtering
         if (filtering.enabled) {
             pose.bestTranslation = filtering.functions[filtering.function](pose.bestTranslation);
         }
 
-        // ============== low pass ==============
+        // Low-pass filtering
         if(lowpassEnabled) {
             if (lastPosition.length == 0) {
                 lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
@@ -209,8 +212,8 @@ var update = function(imageData){
                 lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
             }
         }
-        // ======================================
 
+        // Update current position
         markerPosition[0] = pose.bestTranslation[0];
         markerPosition[1] = pose.bestTranslation[1];
         markerPosition[2] = -pose.bestTranslation[2];
@@ -225,10 +228,10 @@ var update = function(imageData){
     self.postMessage(markerPosition);
 };
 
-
+// Callback that handles communication with UI thread
 self.addEventListener('message', function(e) {
     if(e.data.data !== undefined){
-        if(isStructureDetected) {
+        if(allMarkersDetected) {
             update(e.data.data);
         }else{
             learnMarkerStructure(e.data.data);

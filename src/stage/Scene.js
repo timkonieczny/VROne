@@ -9,7 +9,6 @@
  */
 VROne.Scene = function (canvas) {
 
-    var scope = this;
     var i = 0;
     var recalcBuffers = true;
     var camera = new VROne.Camera(new VROne.CameraManager());
@@ -82,12 +81,16 @@ VROne.Scene = function (canvas) {
      * Call for VR rendering for Google Cardboard (and similar viewers) with experimental positional tracking using
      * fiducial markers. Parameter distortion used to toggle barrel distortion and color abberation on or off.
      * MarkerSize is the size of the (physical) marker in Millimeters.
-     * @param {Number} markerSize
      * @param {Boolean} distorted
+     * @param {Number} markerSize
+     * @param {Number} numberOfMarkers
+     * @param {Number} videoWidth
+     * @param {Boolean} showVideo
      */
-    this.usePositionalCardboard = function(markerSize, distorted, showVideo, videoWidth, numberOfMarkers){
+    //this.usePositionalCardboard = function(markerSize, distorted, showVideo, videoWidth, numberOfMarkers){
+    this.usePositionalCardboard = function(distorted, markerSize, numberOfMarkers, videoWidth, showVideo){
         this.setRendererVR(distorted);
-        camera.getManager().modifiers.push(new VROne.PositionalCardboardIO(markerSize, showVideo, videoWidth, numberOfMarkers));
+        camera.getManager().modifiers.push(new VROne.PositionalCardboardIO(markerSize, numberOfMarkers, videoWidth, showVideo));
         camera.useVR = true;
         this.resize();
 

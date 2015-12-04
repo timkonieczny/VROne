@@ -61,8 +61,8 @@ function init() {
     scene = new VROne.Scene(canvas);
 
     // Set up VR view for Google Cardboard with positional tracking
-    // Arguments: markerSize, distorted, showVideo, videoWidth, numberOfMarkers
-    scene.usePositionalCardboard(80, false, true, 120, 1);
+    // Arguments: distorted, markerSize (mm), numberOfMarkers, videoWidth (pixels), showVideo
+    scene.usePositionalCardboard(false, 80, 1, 120, true);
     // Adjust positional tracking configuration
     var config = scene.getPositionalConfig();
     //config.speed = 1 / 50;

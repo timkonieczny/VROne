@@ -3,7 +3,7 @@
  * @class
  * @constructor
  */
-VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numberOfMarkers) {
+VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth, showVideo) {
 
     VROne.CameraModifier.call(this);
 
@@ -86,6 +86,7 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
         lowpassThreshold: 10
     };
 
+    // Send new configuration to CVWorker
     this.updateConfiguration = function(){
         cvWorker.postMessage({
             'filtering': scope.configuration.filtering,
@@ -111,6 +112,7 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
         }
     }, false);
 
+    // Add necessary HTML elements to DOM
     var addHTMLElements = function(){
         video = document.createElement("video");
         video.setAttribute("style", "position: fixed; z-index: 2; top: 0px");
@@ -126,6 +128,7 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
     };
     addHTMLElements();
 
+    // Obtain video stream from camera. Includes fallback for browsers not supporting constraints (might return wrong camera)
     var initCamera = function(){
         context = videoCanvas.getContext("2d");
 
@@ -205,10 +208,12 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
     };
     initCamera();
 
+    // Initializes CVWorker
     var initWorker = function(){
         cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': videoCanvas.width, 'canvasHeight': videoCanvas.height, 'numberOfMarkers': numberOfMarkers});
     };
 
+    // Handles video feed
     var updateImageData = function(){
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             if(!isVideoInitialized){
@@ -228,6 +233,7 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
         }
     };
 
+    // Updates saved position, and predicted translation
     var updatePosition = function(currentPosition){
 
         position.set(
@@ -253,6 +259,7 @@ VROne.PositionalCardboardIO = function (markerSize, showVideo, videoWidth, numbe
         detectionInProcess = false;
     };
 
+    // Updates position for the current frame
     this.update = function(){
 
         time.update();
