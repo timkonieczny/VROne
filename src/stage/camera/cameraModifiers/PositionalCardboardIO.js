@@ -69,7 +69,7 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
     var degToRad = function(degrees){
         return degrees * Math.PI / 180;
     };
-    document.getElementById("setDefaultOrientation").onclick = function(){
+    document.getElementById("SetDefaultOrientation").onclick = function(){
         alphaOffset = degToRad(-VROne.SensorsHandler.getRoll()+180);
         gammaOffset = degToRad(VROne.SensorsHandler.getYaw()+90);
     };
@@ -82,8 +82,8 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
         filterSamples: 1,
         filtering: false,
         filterMethod: 1,
-        lowpass: false,
-        lowpassThreshold: 10
+        lowPass: false,
+        lowPassThreshold: 10
     };
 
     // Send new configuration to CVWorker
@@ -92,8 +92,8 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
             'filtering': scope.configuration.filtering,
             'filterMethod': scope.configuration.filterMethod,
             'filterSamples': scope.configuration.filterSamples,
-            'lowpass': scope.configuration.lowpass,
-            'lowpassThreshold': scope.configuration.lowpassThreshold});
+            'lowPass': scope.configuration.lowPass,
+            'lowPassThreshold': scope.configuration.lowPassThreshold});
     };
 
     // Callback for worker

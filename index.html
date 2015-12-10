@@ -67,15 +67,143 @@
 
         <script type="text/javascript" src="positional.js"></script>
 
+        <link rel="stylesheet" href="index.css">
     </head>
 
 
-    <body style="border: none; margin: 0;">
-        <p id="frameRates" style="position: fixed; top: 0; right: 0; z-index: 3; text-align: right; font-family: monospace; color: #FFFFFF">camera: <span id="cameraFrameRate"></span></br>renderer: <span id="rendererFrameRate"></span></br><span id="trackingInfo"></span></p>
-        <button id="setDefaultOrientation" style="margin: 0; position: fixed; z-index: 3; top: 0px">Reset camera orientation </button>
-        <div style="width: 100%; height: 100%;">
-            <canvas id="canvas" style="border: none; margin: 0;z-index: 1"></canvas>
+    <body>
+        <p id="FrameRates" class="HideOnStartup">camera: <span id="cameraFrameRate"></span></br>renderer: <span id="rendererFrameRate"></span></br><span id="trackingInfo"></span></p>
+        <button id="SetDefaultOrientation" class="HideOnStartup">Reset camera orientation </button>
+        <div id="CanvasWrapper">
+            <canvas id="Canvas"></canvas>
+        </div>
+        <div id="OuterContainer">
+            <div id="HorizontalCenter">
+                <div id="TableContainer">
+                    <div id="Table">
+                        <div class="Title">
+                            <p>configuration</p>
+                        </div>
+                        <div class="Row">
+                            <div class="Cell">
+                                <p>marker size (mm)</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="markerSize" type="number" value="80" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row">
+                            <div class="Cell">
+                                <p>number of markers</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="numberOfMarkers" type="number" value="1" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>speed</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="speed" type="number" value="0.001" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>video width</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="videoWidth" type="number" value="120" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>updates / second</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="updatesPerSecond" type="number" value="30" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>prediction</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="prediction" type="checkbox" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>filtering</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="filtering" type="checkbox" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>filtering samples</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="filterSamples" type="number" value="3" class="configItem" disabled/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>filtering method</p>
+                            </div>
+                            <div class="Cell">
+                                <fieldset id="FilterMethodInput" disabled>
+                                    <input type="radio" name="filterMethod" value="0" checked class="configItem" id="Filter0"/>
+                                    <label for="filter0"> 0</label>
+                                    <input type="radio" name="filterMethod" value="1" class="configItem" id="Filter1"/>
+                                    <label for="filter1"> 1</label>
+                                </fieldset>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>low-pass filtering</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="lowPass" type="checkbox" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>low-pass threshold</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="lowPassThreshold" type="number" value="10" class="configItem" disabled/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>show preview video</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="showVideo" type="checkbox" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row Advanced">
+                            <div class="Cell">
+                                <p>distorted rendering</p>
+                            </div>
+                            <div class="Cell">
+                                <input id="distorted" type="checkbox" class="configItem"/>
+                            </div>
+                        </div>
+                        <div class="Row">
+                            <div class="Cell">
+                                <button id="Start">Start </button>
+                            </div>
+                            <div class="Cell">
+                                <button id="AdvancedButton">advanced Options </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </body>
-
 </html>

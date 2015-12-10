@@ -71,8 +71,8 @@ var detector,
         previousPositions: [],
         sampleIndex: 0
     },
-    lowpassEnabled = false,
-    lowpassThreshold = 10,
+    lowPassEnabled = false,
+    lowPassThreshold = 10,
     lastPosition = [];
 
 // Initialize marker detection
@@ -196,17 +196,17 @@ var update = function(imageData){
         }
 
         // Low-pass filtering
-        if(lowpassEnabled) {
+        if(lowPassEnabled) {
             if (lastPosition.length == 0) {
                 lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
             } else {
-                if (Math.abs(lastPosition[0] - pose.bestTranslation[0]) > lowpassThreshold)
+                if (Math.abs(lastPosition[0] - pose.bestTranslation[0]) > lowPassThreshold)
                     pose.bestTranslation[0] = (lastPosition[0] + pose.bestTranslation[0]) / 2;
 
-                if (Math.abs(lastPosition[1] - pose.bestTranslation[1]) > lowpassThreshold)
+                if (Math.abs(lastPosition[1] - pose.bestTranslation[1]) > lowPassThreshold)
                     pose.bestTranslation[1] = (lastPosition[1] + pose.bestTranslation[1]) / 2;
 
-                if (Math.abs(lastPosition[2] - pose.bestTranslation[2]) > lowpassThreshold)
+                if (Math.abs(lastPosition[2] - pose.bestTranslation[2]) > lowPassThreshold)
                     pose.bestTranslation[2] = (lastPosition[2] + pose.bestTranslation[2]) / 2;
 
                 lastPosition = [pose.bestTranslation[0], pose.bestTranslation[1], pose.bestTranslation[2]];
@@ -242,7 +242,7 @@ self.addEventListener('message', function(e) {
         filtering.enabled = e.data.filtering;
         filtering.samples = e.data.filterSamples;
         filtering.function = e.data.filterMethod;
-        lowpassEnabled = e.data.lowpass;
-        lowpassThreshold = e.data.lowpassThreshold
+        lowPassEnabled = e.data.lowPass;
+        lowPassThreshold = e.data.lowPassThreshold
     }
 }, false);

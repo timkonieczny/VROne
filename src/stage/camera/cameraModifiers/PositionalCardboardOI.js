@@ -40,7 +40,7 @@ VROne.PositionalCardboardOI = function () {
         return degrees * Math.PI / 180;
     };
 
-    document.getElementById("setDefaultOrientation").onclick = function(){
+    document.getElementById("SetDefaultOrientation").onclick = function(){
         alphaOffset = degToRad(-VROne.SensorsHandler.getRoll()+180);
         gammaOffset = degToRad(VROne.SensorsHandler.getYaw()+90);
     };
