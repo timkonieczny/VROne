@@ -2,17 +2,13 @@ var video,                                      // HTML5 video element
     videoCanvas,                                // canvas used for marker detection
     context,                                    // 2D canvas for video
     imageData,                                  // video data
-    isVideoInitialized = false;                 // true if video canvas has same dimensions as video footage
-
-configuration = {
-    speed: 1 / 1000,
-    updatesPerSecond: 30,
-    imageSamples: 1,
-    prediction: false,
-    filterSamples: 1,
-    filtering: false,
-    filterMethod: 1
-};
+    isVideoInitialized = false,                 // true if video canvas has same dimensions as video footage
+    detector,
+    posit,
+    pose,
+    markerPosition = [0.0,0.0,0.0],
+    foundMarkers,
+    socket;
 
 var addHTMLElements = function(){
 
@@ -101,20 +97,14 @@ var addHTMLElements = function(){
 };
 
 window.onload = function() {
-    addHTMLElements();      // TODO: wrap everything in onload
-    updateImageData();
+    document.getElementById("ConnectButton").onclick = function(){
+        socket = io.connect("http://" + document.getElementById("IPInput").value + ":3000");
+        document.getElementById("ConnectButton").disabled = true;
+        document.getElementById("IPInput").disabled = true;
+        addHTMLElements();
+        updateImageData();
+    };
 };
-
-var detector,
-    posit,
-    pose;
-
-var markerPosition = [0.0,0.0,0.0];
-
-var foundMarkers;
-
-var socket = io.connect("http://localhost:3000");
-
 
 var updateImageData = function(){
     if (video.readyState === video.HAVE_ENOUGH_DATA) {

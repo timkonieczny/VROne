@@ -37,6 +37,7 @@
     border: 0.2em solid #999999;
     padding: 1em;
     border-radius: 10px;
+    background-color: #EFEFEF
 }
 #OuterContainer{
     position: absolute;
