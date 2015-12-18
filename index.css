@@ -1,3 +1,21 @@
+body{
+    border: none;
+    margin: 0;
+}
+input, button{
+    border-radius: 3px;
+}
+input{
+    width:10em;
+    border:none;
+    background-color: #d6d6d6;
+    text-align: right;
+}
+button{
+    border: none;
+    background-color: #a3a3a3;
+    margin: 0;
+}
 #Table{
     display: table;
     font-family: monospace;
@@ -18,9 +36,13 @@
     display: table-cell;
     padding: 2px;
 }
-#FilterMethodInput {
+.Cell p{
+    margin:0;
+}
+fieldset {
     border: none;
     margin:0;
+    padding:0;
 }
 .Row.Advanced{
     display: none;
@@ -45,26 +67,16 @@
     top:1em;
     width:100%;
 }
-input, button{
-    border-radius: 3px;
-}
-input{
-    width:10em;
-    border:none;
-    background-color: #d6d6d6;
-    text-align: right;
-}
-input#Filter0, input#Filter1 {
+input.radio {
+    display: inline-block;
     width:25%;
+    margin:0;
+    float: left;
 }
-#FilterMethodInput label{
+fieldset label{
+    display: inline-block;
     width:25%;
-}
-
-button{
-    border: none;
-    background-color: #a3a3a3;
-    margin: 0;
+    float: left;
 }
 button#Start {
     background-color: #00da33;
@@ -74,8 +86,14 @@ button#Start {
 button#AdvancedButton {
     float: right;
 }
-.Cell p{
-    margin:0;
+#CanvasWrapper {
+    width: 100%;
+    height: 100%;
+}
+#Canvas {
+    border: none;
+    margin: 0;
+    z-index: 1
 }
 #FrameRates {
     position: fixed;
@@ -91,19 +109,6 @@ button#AdvancedButton {
     position: fixed;
     z-index: 3;
     top: 0
-}
-body{
-    border: none;
-    margin: 0;
-}
-#CanvasWrapper {
-    width: 100%;
-    height: 100%;
-}
-#Canvas {
-    border: none;
-    margin: 0;
-    z-index: 1
 }
 .HideOnStartup{
     display: none;

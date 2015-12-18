@@ -2,6 +2,10 @@
  * Creates new VR device configuration for Google Cardboard (and similar viewers) with experimental positional tracking. Fiducial foundMarkers need to be placed in environment.
  * @class
  * @constructor
+ * @param {Number} markerSize
+ * @param {Number} numberOfMarkers
+ * @param {Number} videoWidth
+ * @param {Boolean} showVideo
  */
 VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth, showVideo) {
 
@@ -9,36 +13,36 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
 
     var scope = this,
 
-        // Video
+    // Video
         video,                                      // HTML5 video element
         videoCanvas,                                // canvas used for marker detection
         context,                                    // 2D canvas for video
         imageData,                                  // video data
         isVideoInitialized = false,                 // true if video canvas has same dimensions as video footage
 
-        // Marker detection
+    // Marker detection
         detectionInProcess = false,                 // indicates if worker is currently processing image data
         timeSinceLastMarker = 0,                    // counter to determine when new marker frame is needed
         markerLost = true,                          // indicates if marker is currently present
         workerRunning = false,                      // indicates if worker is currently running
         cvWorker = new Worker("CVWorker.js"),       // worker that handles image processing
 
-        // Prediction
+    // Prediction
         lastPosition = new VROne.Vector3(),         // last valid position obtained through marker used for prediction
         predictedTranslation = new VROne.Vector3(), // translation calculated for prediction
 
-        // Orientation / position
+    // Orientation / position
         orientation = new VROne.Quaternion(),       // current orientation
         position = new VROne.Vector3(),             // current position
 
-        // Sensor
+    // Sensor
         alpha = 0,                                  // sensor orientation
         beta = 0,                                   // sensor orientation
         gamma = 0,                                  // sensor orientation
         alphaOffset = 0,                            // offset used for sensor calibration
         gammaOffset = 0,                            // offset used for sensor calibration
 
-        // Time
+    // Time
         time = {
             now: Date.now(),
             last: Date.now(),
@@ -50,7 +54,7 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
             }
         },
 
-        // Info displays
+    // Info displays
         frameCounter = {
             display: document.getElementById("cameraFrameRate"),
             time: 0,
@@ -69,6 +73,8 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
     var degToRad = function(degrees){
         return degrees * Math.PI / 180;
     };
+
+    // Resets camera orientation
     document.getElementById("SetDefaultOrientation").onclick = function(){
         alphaOffset = degToRad(-VROne.SensorsHandler.getRoll()+180);
         gammaOffset = degToRad(VROne.SensorsHandler.getYaw()+90);
@@ -128,7 +134,8 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
     };
     addHTMLElements();
 
-    // Obtain video stream from camera. Includes fallback for browsers not supporting constraints (might return wrong camera)
+    // Obtain video stream from camera. Includes fallback for browsers not supporting constraints
+    // (might return wrong camera)
     var initCamera = function(){
         context = videoCanvas.getContext("2d");
 
@@ -210,7 +217,8 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
 
     // Initializes CVWorker
     var initWorker = function(){
-        cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': videoCanvas.width, 'canvasHeight': videoCanvas.height, 'numberOfMarkers': numberOfMarkers});
+        cvWorker.postMessage({'markerSize': markerSize, 'canvasWidth': videoCanvas.width,
+            'canvasHeight': videoCanvas.height, 'numberOfMarkers': numberOfMarkers});
     };
 
     // Handles video feed
@@ -269,7 +277,7 @@ VROne.PositionalCardboardIO = function (markerSize, numberOfMarkers, videoWidth,
         if(timeSinceLastMarker >= 1000 / scope.configuration.updatesPerSecond && !detectionInProcess){
             timeSinceLastMarker = 0;
             updateImageData();
-            if(imageData!==undefined) {                                             // from now on camera delivers a continuous data stream
+            if(imageData!==undefined) {                 // from now on camera delivers a continuous data stream
                 cvWorker.postMessage({'data': imageData});
                 detectionInProcess = true;
             }

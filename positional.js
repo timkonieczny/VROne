@@ -39,11 +39,12 @@ var frameCounter = {
     }
 };
 
+// Configuration to be populated by menu
 var startConfiguration = {};
 
 // Initialize scene
 function init() {
-    // Connect to HTML elements and create new scene using HTML canvas
+    // Plug into HTML elements and create new scene using HTML canvas
     frameCounter.display = document.getElementById("rendererFrameRate");
     canvas = document.getElementById("Canvas");
     canvas.onclick = function () {
@@ -65,18 +66,22 @@ function init() {
     // Set up VR view for Google Cardboard with positional tracking
     // Arguments: distorted, markerSize (mm), numberOfMarkers, videoWidth (pixels), showVideo
     scene.usePositionalCardboard(startConfiguration.distorted, startConfiguration.markerSize,
-        startConfiguration.numberOfMarkers, startConfiguration.videoWidth, startConfiguration.showVideo);
+        startConfiguration.numberOfMarkers, startConfiguration.videoWidth, startConfiguration.showVideo,
+        startConfiguration.multiThreaded);
+
     // Adjust positional tracking configuration
-    var config = scene.getPositionalConfig();
-    config.speed = startConfiguration.speed;
-    config.updatesPerSecond = startConfiguration.updatesPerSecond;
-    config.prediction = startConfiguration.prediction;
-    config.filtering = startConfiguration.filtering;
-    config.filterSamples = startConfiguration.filterSamples;
-    config.filterMethod = startConfiguration.filterMethod;
-    config.lowPass = startConfiguration.lowPass;
-    config.lowPassThreshold = startConfiguration.lowPassThreshold;
-    scene.updatePositionalConfig(config);
+    if(startConfiguration.multiThreaded) {
+        var config = scene.getPositionalConfig();
+        config.speed = startConfiguration.speed;
+        config.updatesPerSecond = startConfiguration.updatesPerSecond;
+        config.prediction = startConfiguration.prediction;
+        config.filtering = startConfiguration.filtering;
+        config.filterSamples = startConfiguration.filterSamples;
+        config.filterMethod = startConfiguration.filterMethod;
+        config.lowPass = startConfiguration.lowPass;
+        config.lowPassThreshold = startConfiguration.lowPassThreshold;
+        scene.updatePositionalConfig(config);
+    }
 
     // Set Light Properties
     var light = new VROne.Light();
@@ -117,6 +122,8 @@ function init() {
 
     tick();
 }
+
+// Apply config menu and start scene initialization
 window.onload = function(){
     var startButton = document.getElementById("Start");
     var advancedButton = document.getElementById("AdvancedButton");
@@ -127,8 +134,12 @@ window.onload = function(){
     var lowPassCheckbox = document.getElementById("lowPass");
     var lowPassThresholdInput = document.getElementById("lowPassThreshold");
     var filterMethods = document.getElementsByName("filterMethod");
+    var threading = document.getElementsByName("threading");
+    var numberOfMarkersInput = document.getElementById("numberOfMarkers");
+    var predictionInput = document.getElementById("prediction");
+    var updatesPerSecondInput = document.getElementById("updatesPerSecond");
+    var speedInput = document.getElementById("speed");
     advancedButton.onclick = function(){
-        console.log(advancedOptions[0].style.display);
         for(var i = 0; i < advancedOptions.length; i++){
             if(advancedOptions[i].style.display == "table-row"){
                 advancedOptions[i].style.display = "none";
@@ -144,6 +155,24 @@ window.onload = function(){
     lowPassCheckbox.onclick = function () {
         lowPassThresholdInput.disabled = !lowPassCheckbox.checked;
     };
+    threading[0].onclick = threading[1].onclick = function () {
+        for(var i = 0; i < threading.length; i++){
+            if(threading[i].checked){
+                numberOfMarkersInput.disabled = threading[i].value !== "true";
+                filteringCheckbox.disabled = threading[i].value !== "true";
+                filterSamplesInput.disabled = threading[i].value !== "true";
+                filterMethodInput.disabled = threading[i].value !== "true";
+                lowPassCheckbox.disabled = threading[i].value !== "true";
+                lowPassThresholdInput.disabled = threading[i].value !== "true";
+                predictionInput.disabled = threading[i].value !== "true";
+                updatesPerSecondInput.disabled = threading[i].value !== "true";
+                speedInput.disabled = threading[i].value !== "true";
+                lowPassCheckbox.onclick();
+                filteringCheckbox.onclick();
+                break;
+            }
+        }
+    };
     startButton.onclick = function(){
         document.getElementById("OuterContainer").style.display = "none";
         var hiddenElements = document.getElementsByClassName("HideOnStartup");
@@ -151,15 +180,15 @@ window.onload = function(){
             hiddenElements[i].style.display = "inline";
         }
         startConfiguration.markerSize = Math.abs(parseInt(document.getElementById("markerSize").value));
-        startConfiguration.numberOfMarkers = Math.abs(parseInt(document.getElementById("numberOfMarkers").value));
-        startConfiguration.speed = Math.abs(parseFloat(document.getElementById("speed").value));
+        startConfiguration.numberOfMarkers = Math.abs(parseInt(numberOfMarkersInput.value));
+        startConfiguration.speed = Math.abs(parseFloat(speedInput.value));
         startConfiguration.videoWidth = Math.abs(parseInt(document.getElementById("videoWidth").value));
-        startConfiguration.updatesPerSecond = Math.abs(parseInt(document.getElementById("updatesPerSecond").value));
-        startConfiguration.prediction = document.getElementById("prediction").checked;
-        startConfiguration.filtering = document.getElementById("filtering").checked;
-        startConfiguration.filterSamples = Math.abs(parseInt(document.getElementById("filterSamples").value));
-        startConfiguration.lowPass = document.getElementById("lowPass").checked;
-        startConfiguration.lowPassThreshold = Math.abs(parseInt(document.getElementById("lowPassThreshold").value));
+        startConfiguration.updatesPerSecond = Math.abs(parseInt(updatesPerSecondInput.value));
+        startConfiguration.prediction = predictionInput.checked;
+        startConfiguration.filtering = filteringCheckbox.checked;
+        startConfiguration.filterSamples = Math.abs(parseInt(filterSamplesInput.value));
+        startConfiguration.lowPass = lowPassCheckbox.checked;
+        startConfiguration.lowPassThreshold = Math.abs(parseInt(lowPassThresholdInput.value));
         startConfiguration.distorted = document.getElementById("distorted").checked;
         startConfiguration.showVideo = document.getElementById("showVideo").checked;
         for(var i = 0; i < filterMethods.length; i++){
@@ -168,11 +197,15 @@ window.onload = function(){
                 break;
             }
         }
+        for(i = 0; i < threading.length; i++){
+            if(threading[i].checked){
+                startConfiguration.multiThreaded = threading[i].value === "true";
+                break;
+            }
+        }
         init();
     }
 };
-
-
 
 // Update 3D object properties
 var update = function (){

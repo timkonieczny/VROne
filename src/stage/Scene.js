@@ -1,4 +1,3 @@
-/*jslint browser: true*/
 /*globals VROne*/
 
 /**
@@ -15,7 +14,7 @@ VROne.Scene = function (canvas) {
     var audioContext = new VROne.AudioContext();
     var renderer = null;
     var keyboardHandler = new VROne.KeyboardHandler();
-    
+
     this.render = true;
     this.width = canvas.parentNode.clientWidth;
     this.height = canvas.parentNode.clientHeight;
@@ -25,17 +24,16 @@ VROne.Scene = function (canvas) {
     var lightContainer = new VROne.LightContainer();
     var sounds = [];
 
-/*********************************************
- *
- *      Scene initialization
- *
- *********************************************/
+    /*********************************************
+     *
+     *      Scene initialization
+     *
+     *********************************************/
 
     /**
      * Should be called on window resize
      */
     this.resize = function () {
-//        console.log("Resize");
         this.width = canvas.parentNode.clientWidth;
         this.height = canvas.parentNode.clientHeight;
         renderer.width = this.width;
@@ -80,35 +78,44 @@ VROne.Scene = function (canvas) {
     /**
      * Call for VR rendering for Google Cardboard (and similar viewers) with experimental positional tracking using
      * fiducial markers. Parameter distortion used to toggle barrel distortion and color abberation on or off.
-     * MarkerSize is the size of the (physical) marker in Millimeters.
+     * MarkerSize is the size of the (physical) marker in Millimeters. NumberOfMarkers should be 1 unless a marker
+     * board is used. A lower videoWidth will improve performance. ShowVideo toggles the video preview on or off.
      * @param {Boolean} distorted
      * @param {Number} markerSize
      * @param {Number} numberOfMarkers
      * @param {Number} videoWidth
      * @param {Boolean} showVideo
      */
-    //this.usePositionalCardboard = function(markerSize, distorted, showVideo, videoWidth, numberOfMarkers){
-    this.usePositionalCardboard = function(distorted, markerSize, numberOfMarkers, videoWidth, showVideo){
+    this.usePositionalCardboard = function(distorted, markerSize, numberOfMarkers, videoWidth, showVideo, multiThreaded){
         this.setRendererVR(distorted);
-        camera.getManager().modifiers.push(new VROne.PositionalCardboardIO(markerSize, numberOfMarkers, videoWidth, showVideo));
         camera.useVR = true;
-        this.resize();
-
-        this.getPositionalConfig = function(){
-            for(var i = 0; i < camera.getManager().modifiers.length; i++){
-                if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboardIO){
-                    return camera.getManager().modifiers[i].configuration;
+        if(multiThreaded) {
+            camera.getManager().modifiers.push(new VROne.PositionalCardboardIO(markerSize, numberOfMarkers, videoWidth, showVideo));
+            /**
+             * Returns current positional tracking configuration.
+             */
+            this.getPositionalConfig = function(){
+                for(var i = 0; i < camera.getManager().modifiers.length; i++){
+                    if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboardIO){
+                        return camera.getManager().modifiers[i].configuration;
+                    }
+                }
+            };
+            /**
+             * Updates positional tracking configuration.
+             * @param {Object} config
+             */
+            this.updatePositionalConfig = function(config){
+                for(var i = 0; i < camera.getManager().modifiers.length; i++){
+                    if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboardIO){
+                        camera.getManager().modifiers[i].configuration = config;
+                    }
                 }
             }
+        }else{
+            camera.getManager().modifiers.push(new VROne.PositionalCardboardIOOneThread(markerSize, showVideo, videoWidth));
         };
-
-        this.updatePositionalConfig = function(config){
-            for(var i = 0; i < camera.getManager().modifiers.length; i++){
-                if(camera.getManager().modifiers[i] instanceof VROne.PositionalCardboardIO){
-                    camera.getManager().modifiers[i].configuration = config;
-                }
-            }
-        }
+        this.resize();
     };
 
     /**
@@ -147,14 +154,14 @@ VROne.Scene = function (canvas) {
             rendererObject.clearColor = renderer.clearColor;
             shaders = renderer.getGL().shaders;
         }
-        
+
         renderer = rendererObject;
         renderer.width = this.width;
         renderer.height = this.height;
         renderer.init();
         canvas.style.width = "auto";
         canvas.style.height = "auto";
-        
+
         if(shaders !== null){
             renderer.getGL().shaders = shaders;
         }
@@ -175,11 +182,11 @@ VROne.Scene = function (canvas) {
     else if(window.addEventListener) {
         window.addEventListener('resize', this.resize, true);
     }
-/*********************************************
- *
- *      Scene Management
- *
- *********************************************/
+    /*********************************************
+     *
+     *      Scene Management
+     *
+     *********************************************/
 
     /**
      * Updates input, camera, lights, objects, renderer and sound
@@ -190,16 +197,16 @@ VROne.Scene = function (canvas) {
             calcO3DBuffers(transparentObjects);
             recalcBuffers = false;
         }
-        
+
         //update keyboard inputHandlers
         keyboardHandler.update();
-        
+
         //update camera
         camera.update();
-        
+
         //update lights
         lightContainer.update(camera);
-        
+
         //update objects
         for(i=0; i < objects.length; i++){
             objects[i].update();
@@ -208,7 +215,7 @@ VROne.Scene = function (canvas) {
             transparentObjects[i].update();
         }
         renderer.update(camera, objects, transparentObjects);
-        
+
         //update sounds
         for(i=0;i<sounds.length;i++){
             //sounds[i].listener = camera.getControls().position;
@@ -265,7 +272,7 @@ VROne.Scene = function (canvas) {
             renderer.render(camera, objects, transparentObjects);
         }
     };
-    
+
     var calcO3DBuffers = function(o3DArray){
         for(i=0; i < o3DArray.length; i++){
             if(o3DArray[i].buffer){
@@ -280,13 +287,13 @@ VROne.Scene = function (canvas) {
      * @param {VROne.Light|VROne.Object3D|VROne.Sound} object
      */
     this.addToScene = function (object) {
-        
+
         //Add Light to Scene
         if (object instanceof VROne.Light) {
             lightContainer.addLight(object);
             recalcBuffers = true;
         }
-        
+
         //Add O3D to Scene
         else if (object instanceof VROne.Object3D) {
             if(!recalcBuffers){
@@ -301,15 +308,15 @@ VROne.Scene = function (canvas) {
             else{
                 objects.push(object);
             }
-            
+
         }
-        
+
         //Add Sound
         else if(object instanceof VROne.Sound){
             object.init(audioContext);
             sounds.push(object);
         }
-        
+
         //Unknown Object
         else {
             throw "Can't add to scene. Unknown type: " + typeof object;
@@ -350,12 +357,12 @@ VROne.Scene = function (canvas) {
             throw "Can't remove from scene: " + typeof object;
         }
     };
-    
-/*********************************************
- *
- *      Getter / Setter
- *
- *********************************************/
+
+    /*********************************************
+     *
+     *      Getter / Setter
+     *
+     *********************************************/
 
     /**
      * Returns camera object
@@ -364,14 +371,14 @@ VROne.Scene = function (canvas) {
     this.getCamera = function () {
         return camera;
     };
-    
+
     this.setClearColor = function(red, green, blue){
         renderer.clearColor.red = red;
         renderer.clearColor.green = green;
         renderer.clearColor.blue = blue;
         renderer.getGL().clearColor(red, green, blue, 1.0);
     };
-    
+
     this.setAmbientLight = function(red, green, blue){
         lightContainer.ambientLight.red = red;
         lightContainer.ambientLight.green = green;
