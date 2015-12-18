@@ -80,11 +80,13 @@ VROne.Scene = function (canvas) {
      * fiducial markers. Parameter distortion used to toggle barrel distortion and color abberation on or off.
      * MarkerSize is the size of the (physical) marker in Millimeters. NumberOfMarkers should be 1 unless a marker
      * board is used. A lower videoWidth will improve performance. ShowVideo toggles the video preview on or off.
+     * It is recommended to enable multi-threading.
      * @param {Boolean} distorted
      * @param {Number} markerSize
      * @param {Number} numberOfMarkers
      * @param {Number} videoWidth
      * @param {Boolean} showVideo
+     * @param {Boolean} multiThreaded
      */
     this.usePositionalCardboard = function(distorted, markerSize, numberOfMarkers, videoWidth, showVideo, multiThreaded){
         this.setRendererVR(distorted);
@@ -114,7 +116,7 @@ VROne.Scene = function (canvas) {
             }
         }else{
             camera.getManager().modifiers.push(new VROne.PositionalCardboardIOOneThread(markerSize, showVideo, videoWidth));
-        };
+        }
         this.resize();
     };
 

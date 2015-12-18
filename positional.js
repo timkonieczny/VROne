@@ -91,17 +91,6 @@ function init() {
     scene.addToScene(light);
 
     // Add objects to the scene
-    scene.addToScene(new VROne.Skybox(
-        "alpine_back.jpg",
-        "alpine_front.jpg",
-        "alpine_top.jpg",
-        "alpine_top.jpg",
-        "alpine_right.jpg",
-        "alpine_left.jpg",
-        "assets/",
-        scene.getCamera().getManager(),
-        scene.getCamera().farPlane));
-
     var floor = new VROne.OBJLoader("assets/floor.obj")[0];
     floor.position.y = -1;
     floor.imageSrc = "assets/floor.png";
